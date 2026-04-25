@@ -95,7 +95,7 @@ function getCustomerLabel(customer: Customer | null): string {
     return customer.customerName.trim();
   }
 
-  return 'Mini CRM';
+  return 'Saha CRM';
 }
 
 async function ensureChannel(): Promise<string> {

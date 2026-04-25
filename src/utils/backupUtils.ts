@@ -254,9 +254,9 @@ function buildExcelWorkbook(payload: BackupPayload): XLSX.WorkBook {
   XLSX.utils.book_append_sheet(workbook, activitiesSheet, 'Aktiviteler');
 
   workbook.Props = {
-    Title: 'Mini CRM Yedegi',
-    Subject: 'Mini CRM Excel Disa Aktarimi',
-    Author: 'Mini CRM',
+    Title: 'Saha CRM Yedegi',
+    Subject: 'Saha CRM Excel Disa Aktarimi',
+    Author: 'Saha CRM',
     CreatedDate: new Date(payload.exportedAt),
   };
 
@@ -267,7 +267,7 @@ export async function exportBackupExcelFile(): Promise<BackupExportFile> {
   const payload = createBackupPayload();
   const workbook = buildExcelWorkbook(payload);
   const exportDir = await ensureExportDirectory();
-  const filename = `mini-crm-backup-${createTimestampLabel()}.xlsx`;
+  const filename = `saha-crm-backup-${createTimestampLabel()}.xlsx`;
   const path = `${exportDir}/${filename}`;
   const base64Workbook = XLSX.write(workbook, {
     type: 'base64',
@@ -286,7 +286,7 @@ export async function exportBackupExcelFile(): Promise<BackupExportFile> {
 
 export async function exportBackupJsonFile(): Promise<BackupExportFile> {
   const exportDir = await ensureExportDirectory();
-  const filename = `mini-crm-backup-${createTimestampLabel()}.json`;
+  const filename = `saha-crm-backup-${createTimestampLabel()}.json`;
   const path = `${exportDir}/${filename}`;
   const payload = await exportBackup();
 

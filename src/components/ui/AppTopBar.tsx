@@ -1,5 +1,5 @@
 import React from 'react';
-import { Image, Text, TouchableOpacity, View } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { SMART_PDF_DARK } from './theme';
 
@@ -36,14 +36,26 @@ export const AvatarCircle: React.FC<AvatarCircleProps> = ({
 }) => {
   if (image === 'profile') {
     return (
-      <Image
-        source={require('../../assets/orhan.jpeg')}
+      <View
         style={{
           width: size,
           height: size,
           borderRadius: size / 2,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: toneMap[tone],
         }}
-      />
+      >
+        <Text
+          style={{
+            color: textToneMap[tone],
+            fontSize: Math.max(13, size * 0.34),
+            fontWeight: '700',
+          }}
+        >
+          SC
+        </Text>
+      </View>
     );
   }
 
@@ -71,7 +83,7 @@ export const AvatarCircle: React.FC<AvatarCircleProps> = ({
   );
 };
 
-export const BrandWordmark: React.FC<{ label?: string }> = ({ label = 'CRM' }) => (
+export const BrandWordmark: React.FC<{ label?: string }> = ({ label = 'Saha CRM' }) => (
   <Text
     style={{
       color: SMART_PDF_DARK.accent,

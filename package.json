@@ -1,7 +1,7 @@
 {
   "name": "mini-crm",
   "version": "0.0.1",
-  "description": "Private React Native mobile application for Mini CRM.",
+  "description": "Offline-first React Native mobile application for Saha CRM.",
   "private": true,
   "keywords": [
     "react-native",

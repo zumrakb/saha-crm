@@ -7,8 +7,8 @@
     "home": "Ana Sayfa",
     "customers": "Müşteriler",
     "terms": "Terminler",
-    "navTitle": "Özelleştirmeye hazır",
-    "navBody": "Bu alan Mini CRM temel yapısının bir parçası ve kendi iş akışların için düzenlenmeye hazır.",
+    "navTitle": "Saha CRM hazır",
+    "navBody": "Müşteri, takip ve saha aktivitelerini cihaz içinde düzenli tutmak için hazır.",
     "languageTitle": "Dil desteği",
     "languageBody": "Arayüz dilini istediğin zaman ana ekrandan değiştirebilirsin.",
     "cancel": "İptal",
@@ -32,9 +32,9 @@
     "portuguese": "Portekizce"
   },
   "home": {
-    "welcome": "Mini CRM",
-    "subtitle": "Özel kullanım için mobil CRM temeli",
-    "privateBadge": "Özel",
+    "welcome": "Saha CRM",
+    "subtitle": "İnternet olmadan çalışan lokal saha CRM",
+    "privateBadge": "Lokal",
     "whatsIncluded": "Neler Var",
     "includedHint": "İlk sürüm için temel parçalar hazır.",
     "reactNavigation": "React Navigation",
@@ -53,17 +53,17 @@
     "languageTestBody": "Arayüzü denemek için bir dil seç.",
     "languageTestLine": "<1>Dil desteğini</1> dene: <2>arayüz dilini</2> değiştir.",
     "projectTitle": "Proje durumu",
-    "projectBody": "Eski clone ve şablon referansları temizlendi. Uygulama artık temiz bir Mini CRM başlangıcı.",
+    "projectBody": "Saha CRM, müşteri geçmişi, takipler ve saha aktivitelerini telefonda düzenli tutmak için hazırlanıyor.",
     "projectNoteTitle": "Sıradaki adım",
-    "projectNoteBody": "Bu başlangıç alanlarını müşteri, fırsat, görev ve not akışlarınla değiştir."
+    "projectNoteBody": "Sıradaki odak müşteri listesi, aktivite geçmişi ve takip akışlarını daha hızlı kullanılır hale getirmek."
   },
   "about": {
     "title": "Hakkında",
-    "simpleMessage": "Mini CRM proje özeti burada yer alacak."
+    "simpleMessage": "Saha CRM; müşteri geçmişi, takipler ve satış aktivitelerini cihaz içinde tutan lokal bir mobil CRM uygulamasıdır."
   },
   "settings": {
     "title": "Ayarlar",
-    "simpleMessage": "Mini CRM ayarları burada yönetilecek."
+    "simpleMessage": "Saha CRM ayarları, dil ve yedekleme tercihleri burada yönetilecek."
   },
   "homeDashboard": {
     "title": "Ana Sayfa",
@@ -142,7 +142,7 @@
         "termReminders": "Termin Hatırlatmaları"
       },
       "messages": {
-        "testTitle": "Mini CRM test bildirimi",
+        "testTitle": "Saha CRM test bildirimi",
         "testBody": "Bu cihazda bildirimler çalışıyor.",
         "termTitle": "{{customer}} için termin hatırlatması",
         "termBody": "{{product}} beklenen tarih: {{date}} saat {{time}}"
@@ -384,13 +384,13 @@
   },
   "privacy": {
     "title": "Gizlilik",
-    "simpleMessage": "Mini CRM gizlilik detayları burada yer alacak."
+    "simpleMessage": "Saha CRM verileri cihaz içinde saklar; dışa aktarma ve içe aktarma işlemleri kullanıcı tarafından başlatılır."
   },
   "phaseZero": {
     "badge": "Faz 0",
-    "projectSubtitle": "Boş ama çalışan CRM iskeleti",
-    "projectTitle": "Temiz başlangıç",
-    "projectBody": "Uygulama artık demo sekmeler yerine gerçek CRM akışına hazırlanmış minimal bir kabukla açılıyor. Bu aşamada amaç, doğru bilgi mimarisini sabitlemek ve uygulamayı sorunsuz ayağa kaldırmak.",
+    "projectSubtitle": "Lokal ve sade saha CRM",
+    "projectTitle": "Saha CRM başlangıcı",
+    "projectBody": "Uygulama müşteri, aktivite, termin ve yedekleme akışlarını internet gerekmeden çalışacak şekilde sade bir saha CRM yapısında topluyor.",
     "languageTitle": "Dil",
     "languageBody": "i18n korunuyor. Ana akış oturana kadar dil desteği burada kalacak ve kullanıcı tercihleri cihaz içinde saklanmaya devam edecek.",
     "homeCardTitle": "Ana Sayfa",

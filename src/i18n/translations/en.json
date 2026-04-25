@@ -7,8 +7,8 @@
     "home": "Home",
     "customers": "Customers",
     "terms": "Terms",
-    "navTitle": "Ready to customize",
-    "navBody": "This area is part of the Mini CRM base and is ready for your own workflows.",
+    "navTitle": "Saha CRM is ready",
+    "navBody": "Keep customers, follow-ups, and field activity organized on this device.",
     "languageTitle": "Language support",
     "languageBody": "You can switch the interface language from the dashboard whenever you need.",
     "cancel": "Cancel",
@@ -32,9 +32,9 @@
     "portuguese": "Portuguese"
   },
   "home": {
-    "welcome": "Mini CRM",
-    "subtitle": "Private mobile CRM foundation",
-    "privateBadge": "Private",
+    "welcome": "Saha CRM",
+    "subtitle": "Offline-first local field CRM",
+    "privateBadge": "Local",
     "whatsIncluded": "What's included",
     "includedHint": "Core pieces already set up for the first version.",
     "reactNavigation": "React Navigation",
@@ -53,17 +53,17 @@
     "languageTestBody": "Select a language to try the interface.",
     "languageTestLine": "Try <1>language support</1>: switch the <2>interface language</2>.",
     "projectTitle": "Project status",
-    "projectBody": "Old clone references have been removed. This app now starts as a clean Mini CRM base.",
+    "projectBody": "Saha CRM is being shaped to keep customer history, follow-ups, and field activity organized on the phone.",
     "projectNoteTitle": "Next step",
-    "projectNoteBody": "Replace these starter sections with your own customers, pipeline, tasks, and notes flows."
+    "projectNoteBody": "The next focus is making customer lists, activity history, and follow-ups faster to use."
   },
   "about": {
     "title": "About",
-    "simpleMessage": "Project overview content for Mini CRM will live here."
+    "simpleMessage": "Saha CRM is a local mobile CRM for keeping customer history, follow-ups, and sales activities on the device."
   },
   "settings": {
     "title": "Settings",
-    "simpleMessage": "Settings for Mini CRM will be managed here."
+    "simpleMessage": "Saha CRM settings, language, and backup preferences will be managed here."
   },
   "homeDashboard": {
     "title": "Home",
@@ -142,7 +142,7 @@
         "termReminders": "Term Reminders"
       },
       "messages": {
-        "testTitle": "Mini CRM test notification",
+        "testTitle": "Saha CRM test notification",
         "testBody": "Notifications are working on this device.",
         "termTitle": "Term reminder for {{customer}}",
         "termBody": "{{product}} due date: {{date}} at {{time}}"
@@ -384,13 +384,13 @@
   },
   "privacy": {
     "title": "Privacy",
-    "simpleMessage": "Privacy details for Mini CRM will be managed here."
+    "simpleMessage": "Saha CRM keeps data on the device; export and import actions only start when the user chooses them."
   },
   "phaseZero": {
     "badge": "Phase 0",
-    "projectSubtitle": "Empty but working CRM shell",
-    "projectTitle": "Clean starting point",
-    "projectBody": "The app now opens with a minimal shell prepared for the real CRM flow instead of demo tabs. At this stage the goal is to lock in the right information architecture and keep startup stable.",
+    "projectSubtitle": "Local and simple field CRM",
+    "projectTitle": "Saha CRM starting point",
+    "projectBody": "The app brings customer, activity, term, and backup flows into a simple field CRM structure that works without internet access.",
     "languageTitle": "Language",
     "languageBody": "i18n stays in place. Language support remains available here while the main workflow is being built, and the preference continues to be stored on device.",
     "homeCardTitle": "Home",
