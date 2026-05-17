@@ -209,7 +209,7 @@
   "customersScreen": {
     "subtitle": "Customer records will be listed here. The card view will be enriched in the next step.",
     "addButton": "New Customer",
-    "searchPlaceholder": "Search this page",
+    "searchPlaceholder": "Search name, company, phone, or last action",
     "loading": "Loading customers...",
     "emptyTitle": "No customers yet",
     "emptyBody": "The first customer you add will appear here.",

@@ -41,35 +41,37 @@ const CustomerListScreen: React.FC = () => {
     }, [load]),
   );
 
-  const filteredCustomers = useMemo(() => {
+  const customerCards = useMemo(
+    () =>
+      customers.map(customer => ({
+        customer,
+        lastActivity: getLastByCustomer(customer.id),
+      })),
+    [customers, getLastByCustomer],
+  );
+
+  const filteredCustomerCards = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLocaleLowerCase('tr-TR');
 
     if (!normalizedQuery) {
-      return customers;
+      return customerCards;
     }
 
-    return customers.filter(customer => {
+    return customerCards.filter(({ customer, lastActivity }) => {
       const searchableText = [
         customer.customerName,
         customer.companyName,
         customer.phone ?? '',
         customer.email ?? '',
+        lastActivity?.type ?? '',
+        lastActivity?.note ?? '',
       ]
         .join(' ')
         .toLocaleLowerCase('tr-TR');
 
       return searchableText.includes(normalizedQuery);
     });
-  }, [customers, searchQuery]);
-
-  const customerCards = useMemo(
-    () =>
-      filteredCustomers.map(customer => ({
-        customer,
-        lastActivity: getLastByCustomer(customer.id),
-      })),
-    [filteredCustomers, getLastByCustomer],
-  );
+  }, [customerCards, searchQuery]);
 
   const listHeader = (
     <View className="px-5 pb-5 pt-6">
@@ -110,7 +112,7 @@ const CustomerListScreen: React.FC = () => {
       />
 
       <FlatList
-        data={customerCards}
+        data={filteredCustomerCards}
         keyExtractor={item => item.customer.id.toString()}
         renderItem={({ item }) => (
           <View className="px-5">

@@ -209,7 +209,7 @@
   "customersScreen": {
     "subtitle": "Müşteri kayıtları burada listelenecek. Sonraki adımda kart görünümü daha da zenginleşecek.",
     "addButton": "Yeni Müşteri",
-    "searchPlaceholder": "Sayfada arama yap",
+    "searchPlaceholder": "Ad, firma, telefon veya son işlem ara",
     "loading": "Müşteriler yükleniyor...",
     "emptyTitle": "Henüz müşteri yok",
     "emptyBody": "İlk müşteriyi eklediğinde burada listelenecek.",

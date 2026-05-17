@@ -1,5 +1,6 @@
 import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import type { Activity } from '../../constants/activity.types';
 import type { Customer } from '../../constants/customer.types';
@@ -26,9 +27,15 @@ const CustomerCard: React.FC<CustomerCardProps> = ({
   lastActivity,
   onPress,
 }) => {
-  const lastActionLabel = lastActivity?.type || customer.customerName;
+  const { t } = useTranslation();
+  const lastActionLabel = lastActivity
+    ? `${t('customerCard.lastActionLabel')}: ${lastActivity.type}`
+    : t('customerCard.noActivity');
+  const lastActionNote = lastActivity?.note?.trim() ?? '';
   const lastActionDate = lastActivity ? formatDate(lastActivity.date) : '';
-  const initials = getInitials(customer.companyName || customer.customerName);
+  const displayTitle = customer.companyName || customer.customerName;
+  const displaySubtitle = customer.companyName ? customer.customerName : customer.phone;
+  const initials = getInitials(displayTitle);
 
   return (
     <TouchableOpacity
@@ -57,15 +64,17 @@ const CustomerCard: React.FC<CustomerCardProps> = ({
               style={{ color: SMART_PDF_DARK.text }}
               numberOfLines={2}
             >
-              {customer.companyName}
+              {displayTitle}
             </Text>
-            <Text
-              className="mt-0.5 text-[12px] leading-5"
-              style={{ color: SMART_PDF_DARK.muted }}
-              numberOfLines={1}
-            >
-              {customer.customerName}
-            </Text>
+            {displaySubtitle ? (
+              <Text
+                className="mt-0.5 text-[12px] leading-5"
+                style={{ color: SMART_PDF_DARK.muted }}
+                numberOfLines={1}
+              >
+                {displaySubtitle}
+              </Text>
+            ) : null}
           </View>
         </View>
 
@@ -89,7 +98,7 @@ const CustomerCard: React.FC<CustomerCardProps> = ({
         </View>
 
         <View className="flex-row items-center justify-between gap-4">
-          <View className="min-w-0 flex-1">
+          <View className="min-w-0 flex-1 gap-0.5">
             <Text
               className="text-[12px] leading-5"
               style={{ color: SMART_PDF_DARK.muted }}
@@ -97,6 +106,15 @@ const CustomerCard: React.FC<CustomerCardProps> = ({
             >
               {lastActionLabel}
             </Text>
+            {lastActionNote ? (
+              <Text
+                className="text-[12px] leading-5"
+                style={{ color: SMART_PDF_DARK.text }}
+                numberOfLines={1}
+              >
+                {lastActionNote}
+              </Text>
+            ) : null}
           </View>
 
           {lastActionDate ? (
