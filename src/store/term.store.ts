@@ -6,10 +6,14 @@ import {
   insertTerm,
   updateTerm,
   updateTermStatus,
+  updateTermStage,
   type TermWriteInput,
 } from '../repositories/term.repository';
 import type { TermStatus } from '../constants/termStatus';
-import { cancelTermReminder, scheduleTermReminder } from '../services/termNotifications';
+import {
+  cancelTermReminder,
+  scheduleTermReminder,
+} from '../services/termNotifications';
 
 interface TermStore {
   terms: Term[];
@@ -20,7 +24,12 @@ interface TermStore {
   loadByCustomer: (customerId: number) => void;
   add: (data: TermWriteInput) => Promise<number | null>;
   update: (termId: number, data: TermWriteInput) => Promise<boolean>;
-  updateStatus: (termId: number, customerId: number, status: TermStatus) => Promise<void>;
+  updateStatus: (
+    termId: number,
+    customerId: number,
+    status: TermStatus,
+  ) => Promise<void>;
+  updateStage: (termId: number, stage: Term['stage']) => Promise<boolean>;
 }
 
 export const useTermStore = create<TermStore>(set => ({
@@ -67,9 +76,10 @@ export const useTermStore = create<TermStore>(set => ({
       const termId = insertTerm(data);
 
       set(state => {
-        const terms = state.activeCustomerId !== null
-          ? getTermsByCustomer(state.activeCustomerId)
-          : getAllTerms();
+        const terms =
+          state.activeCustomerId !== null
+            ? getTermsByCustomer(state.activeCustomerId)
+            : getAllTerms();
 
         return {
           terms,
@@ -99,9 +109,10 @@ export const useTermStore = create<TermStore>(set => ({
       updateTerm(termId, data);
 
       set(state => {
-        const terms = state.activeCustomerId !== null
-          ? getTermsByCustomer(state.activeCustomerId)
-          : getAllTerms();
+        const terms =
+          state.activeCustomerId !== null
+            ? getTermsByCustomer(state.activeCustomerId)
+            : getAllTerms();
 
         return {
           terms,
@@ -118,7 +129,8 @@ export const useTermStore = create<TermStore>(set => ({
       return true;
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : 'Failed to update term.',
+        error:
+          error instanceof Error ? error.message : 'Failed to update term.',
       });
 
       return false;
@@ -131,9 +143,10 @@ export const useTermStore = create<TermStore>(set => ({
       let nextTerms: Term[] = [];
 
       set(state => {
-        nextTerms = state.activeCustomerId !== null
-          ? getTermsByCustomer(state.activeCustomerId)
-          : getAllTerms();
+        nextTerms =
+          state.activeCustomerId !== null
+            ? getTermsByCustomer(state.activeCustomerId)
+            : getAllTerms();
 
         return {
           terms: nextTerms,
@@ -150,8 +163,34 @@ export const useTermStore = create<TermStore>(set => ({
       }
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : 'Failed to update term.',
+        error:
+          error instanceof Error ? error.message : 'Failed to update term.',
       });
+    }
+  },
+  updateStage: async (termId, stage) => {
+    try {
+      updateTermStage(termId, stage);
+
+      set(state => {
+        const terms =
+          state.activeCustomerId !== null
+            ? getTermsByCustomer(state.activeCustomerId)
+            : getAllTerms();
+
+        return {
+          terms,
+          error: null,
+        };
+      });
+
+      return true;
+    } catch (error) {
+      set({
+        error:
+          error instanceof Error ? error.message : 'Failed to update stage.',
+      });
+      return false;
     }
   },
 }));

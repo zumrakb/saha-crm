@@ -1,14 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import {
-  useFocusEffect,
-} from '@react-navigation/native';
-import {
-  Alert,
-  Platform,
-  ScrollView,
-  Text,
-  View,
-} from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
+import { Alert, Platform, ScrollView, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { FileSystem } from 'react-native-file-access';
@@ -23,12 +15,19 @@ import AppTopBar, {
 import BottomSheetModal from '../components/ui/BottomSheetModal';
 import InlineGlobalSearch from '../components/ui/InlineGlobalSearch';
 import SurfaceCard from '../components/ui/SurfaceCard';
-import { FLOATING_TAB_BAR, SMART_PDF_DARK, uiStyles, useAppTheme, type AppThemePreference } from '../components/ui/theme';
+import {
+  FLOATING_TAB_BAR,
+  SMART_PDF_DARK,
+  uiStyles,
+  useAppTheme,
+  type AppThemePreference,
+} from '../components/ui/theme';
 import {
   exportBackupExcelFile,
   exportBackupJsonFile,
   type BackupExportFile,
 } from '../utils/backupUtils';
+import { clearDemoData, seedDemoData } from '../utils/demoData';
 import {
   getNotificationDebugSummary,
   requestNotificationPermission,
@@ -44,10 +43,12 @@ type ExportKind = 'json' | 'excel' | null;
 const SettingsScreen: React.FC = () => {
   const { t, i18n } = useTranslation();
   const { preference, setPreference } = useAppTheme();
+  const [isDemoBusy, setIsDemoBusy] = useState(false);
   const [isJsonBusy, setIsJsonBusy] = useState(false);
   const [isExcelBusy, setIsExcelBusy] = useState(false);
   const [isNotificationBusy, setIsNotificationBusy] = useState(false);
-  const [notificationSummary, setNotificationSummary] = useState<NotificationDebugSummary | null>(null);
+  const [notificationSummary, setNotificationSummary] =
+    useState<NotificationDebugSummary | null>(null);
   const [pendingExport, setPendingExport] = useState<ExportKind>(null);
   const [isAboutVisible, setIsAboutVisible] = useState(false);
   const [isSearchVisible, setIsSearchVisible] = useState(false);
@@ -55,16 +56,32 @@ const SettingsScreen: React.FC = () => {
 
   const currentLanguage = (i18n.language || 'en').slice(0, 2);
   const languageButtons = [
-    { code: 'en', label: t('languages.english'), icon: 'language-outline' as const },
-    { code: 'tr', label: t('languages.turkish'), icon: 'globe-outline' as const },
+    {
+      code: 'en',
+      label: t('languages.english'),
+      icon: 'language-outline' as const,
+    },
+    {
+      code: 'tr',
+      label: t('languages.turkish'),
+      icon: 'globe-outline' as const,
+    },
   ];
   const themeButtons: Array<{
     code: AppThemePreference;
     label: string;
     iconName: React.ComponentProps<typeof Ionicons>['name'];
   }> = [
-    { code: 'light', label: t('settingsDashboard.themeOptions.light'), iconName: 'sunny-outline' },
-    { code: 'dark', label: t('settingsDashboard.themeOptions.dark'), iconName: 'moon-outline' },
+    {
+      code: 'light',
+      label: t('settingsDashboard.themeOptions.light'),
+      iconName: 'sunny-outline',
+    },
+    {
+      code: 'dark',
+      label: t('settingsDashboard.themeOptions.dark'),
+      iconName: 'moon-outline',
+    },
   ];
   const normalizedSearchQuery = searchQuery.trim().toLocaleLowerCase('tr-TR');
 
@@ -91,7 +108,9 @@ const SettingsScreen: React.FC = () => {
     } catch (error) {
       Alert.alert(
         t('settingsDashboard.notifications.errorTitle'),
-        error instanceof Error ? error.message : t('settingsDashboard.notifications.errorBody'),
+        error instanceof Error
+          ? error.message
+          : t('settingsDashboard.notifications.errorBody'),
       );
     } finally {
       setIsNotificationBusy(false);
@@ -112,7 +131,9 @@ const SettingsScreen: React.FC = () => {
     } catch (error) {
       Alert.alert(
         t('settingsDashboard.notifications.errorTitle'),
-        error instanceof Error ? error.message : t('settingsDashboard.notifications.errorBody'),
+        error instanceof Error
+          ? error.message
+          : t('settingsDashboard.notifications.errorBody'),
       );
     } finally {
       setIsNotificationBusy(false);
@@ -133,7 +154,9 @@ const SettingsScreen: React.FC = () => {
     } catch (error) {
       Alert.alert(
         t('settingsDashboard.notifications.errorTitle'),
-        error instanceof Error ? error.message : t('settingsDashboard.notifications.errorBody'),
+        error instanceof Error
+          ? error.message
+          : t('settingsDashboard.notifications.errorBody'),
       );
     } finally {
       setIsNotificationBusy(false);
@@ -153,27 +176,30 @@ const SettingsScreen: React.FC = () => {
     }, []),
   );
 
-  const deliverFile = useCallback(async (file: BackupExportFile) => {
-    if (Platform.OS === 'android') {
-      await FileSystem.cpExternal(file.path, file.filename, 'downloads');
-      Alert.alert(
-        t('settingsDashboard.downloadSuccessTitle'),
-        t('settingsDashboard.downloadSuccessBody', {
-          filename: file.filename,
-        }),
-      );
-      return;
-    }
+  const deliverFile = useCallback(
+    async (file: BackupExportFile) => {
+      if (Platform.OS === 'android') {
+        await FileSystem.cpExternal(file.path, file.filename, 'downloads');
+        Alert.alert(
+          t('settingsDashboard.downloadSuccessTitle'),
+          t('settingsDashboard.downloadSuccessBody', {
+            filename: file.filename,
+          }),
+        );
+        return;
+      }
 
-    await Share.open({
-      url: `file://${file.path}`,
-      type: file.mimeType,
-      filename: file.filename,
-      failOnCancel: false,
-      saveToFiles: true,
-      title: file.filename,
-    });
-  }, [t]);
+      await Share.open({
+        url: `file://${file.path}`,
+        type: file.mimeType,
+        filename: file.filename,
+        failOnCancel: false,
+        saveToFiles: true,
+        title: file.filename,
+      });
+    },
+    [t],
+  );
 
   const handleJsonDownload = useCallback(async () => {
     setIsJsonBusy(true);
@@ -184,7 +210,9 @@ const SettingsScreen: React.FC = () => {
     } catch (error) {
       Alert.alert(
         t('settingsDashboard.exportErrorTitle'),
-        error instanceof Error ? error.message : t('settingsDashboard.exportErrorBody'),
+        error instanceof Error
+          ? error.message
+          : t('settingsDashboard.exportErrorBody'),
       );
     } finally {
       setIsJsonBusy(false);
@@ -201,7 +229,9 @@ const SettingsScreen: React.FC = () => {
     } catch (error) {
       Alert.alert(
         t('settingsDashboard.exportExcelErrorTitle'),
-        error instanceof Error ? error.message : t('settingsDashboard.exportExcelErrorBody'),
+        error instanceof Error
+          ? error.message
+          : t('settingsDashboard.exportExcelErrorBody'),
       );
     } finally {
       setIsExcelBusy(false);
@@ -220,39 +250,111 @@ const SettingsScreen: React.FC = () => {
     }
   }, [handleExcelExport, handleJsonDownload, pendingExport]);
 
-  const showThemeSection = !normalizedSearchQuery || [
-    t('settingsDashboard.themeTitle'),
-    ...themeButtons.map(button => button.label),
-  ].join(' ').toLocaleLowerCase('tr-TR').includes(normalizedSearchQuery);
+  const handleSeedDemo = useCallback(() => {
+    setIsDemoBusy(true);
+    try {
+      const result = seedDemoData();
+      if (result.alreadyExists) {
+        Alert.alert(
+          'Demo Veri',
+          'Demo veriler zaten yüklü. Önce kaldırıp tekrar ekleyebilirsin.',
+        );
+      } else {
+        Alert.alert(
+          'Demo Veri Eklendi',
+          `${result.customerCount} müşteri ve ${result.termCount} vade eklendi.`,
+        );
+      }
+    } finally {
+      setIsDemoBusy(false);
+    }
+  }, []);
 
-  const showLanguageSection = !normalizedSearchQuery || [
-    t('settingsDashboard.languageTitle'),
-    ...languageButtons.map(button => button.label),
-  ].join(' ').toLocaleLowerCase('tr-TR').includes(normalizedSearchQuery);
+  const handleClearDemo = useCallback(() => {
+    Alert.alert(
+      'Demo Verileri Kaldır',
+      'Demo olarak eklenen tüm müşteriler ve vadeler silinecek. Kendi eklediğin veriler etkilenmez.',
+      [
+        { text: 'İptal', style: 'cancel' },
+        {
+          text: 'Kaldır',
+          style: 'destructive',
+          onPress: () => {
+            setIsDemoBusy(true);
+            try {
+              const count = clearDemoData();
+              Alert.alert(
+                'Demo Veri Kaldırıldı',
+                count > 0
+                  ? `${count} demo müşteri ve tüm vadeleri silindi.`
+                  : 'Silinecek demo veri bulunamadı.',
+              );
+            } finally {
+              setIsDemoBusy(false);
+            }
+          },
+        },
+      ],
+    );
+  }, []);
 
-  const showNotificationSection = !normalizedSearchQuery || [
-    t('settingsDashboard.notifications.title'),
-    t('settingsDashboard.notifications.permissionAction'),
-    t('settingsDashboard.notifications.syncAction'),
-  ].join(' ').toLocaleLowerCase('tr-TR').includes(normalizedSearchQuery);
+  const showThemeSection =
+    !normalizedSearchQuery ||
+    [
+      t('settingsDashboard.themeTitle'),
+      ...themeButtons.map(button => button.label),
+    ]
+      .join(' ')
+      .toLocaleLowerCase('tr-TR')
+      .includes(normalizedSearchQuery);
 
-  const showDataSection = !normalizedSearchQuery || [
-    t('settingsDashboard.dataTitle'),
-    t('settingsDashboard.shortJsonAction'),
-    t('settingsDashboard.shortExcelAction'),
-  ].join(' ').toLocaleLowerCase('tr-TR').includes(normalizedSearchQuery);
+  const showLanguageSection =
+    !normalizedSearchQuery ||
+    [
+      t('settingsDashboard.languageTitle'),
+      ...languageButtons.map(button => button.label),
+    ]
+      .join(' ')
+      .toLocaleLowerCase('tr-TR')
+      .includes(normalizedSearchQuery);
 
-  const showAboutAction = !normalizedSearchQuery || [
-    t('settingsDashboard.versionAction'),
-    t('settingsDashboard.versionInfoTitle'),
-  ].join(' ').toLocaleLowerCase('tr-TR').includes(normalizedSearchQuery);
-  const hasSearchResults = (
-    showThemeSection
-    || showLanguageSection
-    || showNotificationSection
-    || showDataSection
-    || showAboutAction
-  );
+  const showNotificationSection =
+    !normalizedSearchQuery ||
+    [
+      t('settingsDashboard.notifications.title'),
+      t('settingsDashboard.notifications.permissionAction'),
+      t('settingsDashboard.notifications.syncAction'),
+    ]
+      .join(' ')
+      .toLocaleLowerCase('tr-TR')
+      .includes(normalizedSearchQuery);
+
+  const showDataSection =
+    !normalizedSearchQuery ||
+    [
+      t('settingsDashboard.dataTitle'),
+      t('settingsDashboard.shortJsonAction'),
+      t('settingsDashboard.shortExcelAction'),
+    ]
+      .join(' ')
+      .toLocaleLowerCase('tr-TR')
+      .includes(normalizedSearchQuery);
+
+  const showAboutAction =
+    !normalizedSearchQuery ||
+    [
+      t('settingsDashboard.versionAction'),
+      t('settingsDashboard.versionInfoTitle'),
+    ]
+      .join(' ')
+      .toLocaleLowerCase('tr-TR')
+      .includes(normalizedSearchQuery);
+  const hasSearchResults =
+    showThemeSection ||
+    showLanguageSection ||
+    showNotificationSection ||
+    showDataSection ||
+    showAboutAction;
 
   return (
     <AppScreen>
@@ -261,7 +363,10 @@ const SettingsScreen: React.FC = () => {
         onClose={() => setPendingExport(null)}
       >
         <View className="flex-col gap-4">
-          <Text className="text-[22px] font-semibold tracking-[-0.4px]" style={uiStyles.titleText}>
+          <Text
+            className="text-[22px] font-semibold tracking-[-0.4px]"
+            style={uiStyles.titleText}
+          >
             {pendingExport === 'json'
               ? t('settingsDashboard.confirmJsonBody')
               : t('settingsDashboard.confirmExcelBody')}
@@ -291,7 +396,10 @@ const SettingsScreen: React.FC = () => {
         <View className="flex-col gap-4">
           <View className="flex-row items-center justify-between gap-3">
             <View className="min-w-0 flex-1 gap-1">
-              <Text className="text-[20px] font-semibold tracking-[-0.3px]" style={uiStyles.titleText}>
+              <Text
+                className="text-[20px] font-semibold tracking-[-0.3px]"
+                style={uiStyles.titleText}
+              >
                 {t('settingsDashboard.versionInfoTitle')}
               </Text>
               <Text className="text-sm" style={uiStyles.bodyText}>
@@ -322,20 +430,26 @@ const SettingsScreen: React.FC = () => {
 
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ paddingBottom: FLOATING_TAB_BAR.contentPaddingBottom }}
+        contentContainerStyle={{
+          paddingBottom: FLOATING_TAB_BAR.contentPaddingBottom,
+        }}
         showsVerticalScrollIndicator={false}
       >
         <View className="px-5 pb-6 pt-6">
           <View className="flex-col gap-6">
             <View style={{ minHeight: 40, position: 'relative' }}>
               <AppTopBar
-                left={(
+                left={
                   <>
                     <AvatarCircle image="profile" size={34} />
                     <BrandWordmark label={t('settingsDashboard.title')} />
                   </>
-                )}
-                right={<SearchGlyph onPress={() => setIsSearchVisible(current => !current)} />}
+                }
+                right={
+                  <SearchGlyph
+                    onPress={() => setIsSearchVisible(current => !current)}
+                  />
+                }
               />
 
               <InlineGlobalSearch
@@ -344,151 +458,235 @@ const SettingsScreen: React.FC = () => {
                 onChangeText={setSearchQuery}
                 onClose={() => setIsSearchVisible(false)}
                 placeholder={t('common.pageSearchPlaceholder')}
-                showNoResults={Boolean(normalizedSearchQuery) && !hasSearchResults}
-                style={{ position: 'absolute', left: 0, right: 0, top: 0, zIndex: 20 }}
+                showNoResults={
+                  Boolean(normalizedSearchQuery) && !hasSearchResults
+                }
+                style={{
+                  position: 'absolute',
+                  left: 0,
+                  right: 0,
+                  top: 0,
+                  zIndex: 20,
+                }}
               />
             </View>
 
             {showThemeSection ? (
               <SurfaceCard>
-              <View className="flex-col gap-4">
-                <View className="flex-row items-center gap-3">
-                  <Ionicons name="color-palette-outline" size={22} color={SMART_PDF_DARK.accent} />
-                  <Text className="text-[18px] font-semibold tracking-[-0.4px]" style={uiStyles.titleText}>
-                    {t('settingsDashboard.themeTitle')}
-                  </Text>
-                </View>
+                <View className="flex-col gap-4">
+                  <View className="flex-row items-center gap-3">
+                    <Ionicons
+                      name="color-palette-outline"
+                      size={22}
+                      color={SMART_PDF_DARK.accent}
+                    />
+                    <Text
+                      className="text-[18px] font-semibold tracking-[-0.4px]"
+                      style={uiStyles.titleText}
+                    >
+                      {t('settingsDashboard.themeTitle')}
+                    </Text>
+                  </View>
 
-                <View className="flex-row gap-2">
-                  {themeButtons.map(button => {
-                    const isActive = preference === button.code;
+                  <View className="flex-row gap-2">
+                    {themeButtons.map(button => {
+                      const isActive = preference === button.code;
 
-                    return (
-                      <AppButton
-                        key={button.code}
-                        label={button.label}
-                        onPress={() => setPreference(button.code).catch(() => undefined)}
-                        variant={isActive ? 'soft' : 'secondary'}
-                        style={{
-                          flex: 1,
-                        }}
-                        iconName={button.iconName}
-                      />
-                    );
-                  })}
+                      return (
+                        <AppButton
+                          key={button.code}
+                          label={button.label}
+                          onPress={() =>
+                            setPreference(button.code).catch(() => undefined)
+                          }
+                          variant={isActive ? 'soft' : 'secondary'}
+                          style={{
+                            flex: 1,
+                          }}
+                          iconName={button.iconName}
+                        />
+                      );
+                    })}
+                  </View>
                 </View>
-              </View>
               </SurfaceCard>
             ) : null}
 
             {showLanguageSection ? (
               <SurfaceCard>
-              <View className="flex-col gap-4">
-                <View className="flex-row items-center gap-3">
-                  <Ionicons name="language-outline" size={22} color={SMART_PDF_DARK.secondaryText} />
-                  <Text className="text-[18px] font-semibold tracking-[-0.4px]" style={uiStyles.titleText}>
-                    {t('settingsDashboard.languageTitle')}
-                  </Text>
-                </View>
+                <View className="flex-col gap-4">
+                  <View className="flex-row items-center gap-3">
+                    <Ionicons
+                      name="language-outline"
+                      size={22}
+                      color={SMART_PDF_DARK.secondaryText}
+                    />
+                    <Text
+                      className="text-[18px] font-semibold tracking-[-0.4px]"
+                      style={uiStyles.titleText}
+                    >
+                      {t('settingsDashboard.languageTitle')}
+                    </Text>
+                  </View>
 
-                <View className="flex-row gap-2">
-                  {languageButtons.map(button => {
-                    const isActive = currentLanguage === button.code;
+                  <View className="flex-row gap-2">
+                    {languageButtons.map(button => {
+                      const isActive = currentLanguage === button.code;
 
-                    return (
-                      <AppButton
-                        key={button.code}
-                        label={button.label}
-                        onPress={() => i18n.changeLanguage(button.code).catch(() => undefined)}
-                        variant={isActive ? 'soft' : 'secondary'}
-                        iconName={button.icon}
-                        style={{ flex: 1 }}
-                      />
-                    );
-                  })}
+                      return (
+                        <AppButton
+                          key={button.code}
+                          label={button.label}
+                          onPress={() =>
+                            i18n
+                              .changeLanguage(button.code)
+                              .catch(() => undefined)
+                          }
+                          variant={isActive ? 'soft' : 'secondary'}
+                          iconName={button.icon}
+                          style={{ flex: 1 }}
+                        />
+                      );
+                    })}
+                  </View>
                 </View>
-              </View>
               </SurfaceCard>
             ) : null}
 
             {showNotificationSection ? (
               <SurfaceCard>
-              <View className="flex-col gap-4">
-                <View className="flex-row items-center justify-between gap-3">
-                  <View className="flex-row items-center gap-3">
-                    <Ionicons name="notifications-outline" size={22} color={SMART_PDF_DARK.accent} />
-                    <Text className="text-[18px] font-semibold tracking-[-0.4px]" style={uiStyles.titleText}>
-                      {t('settingsDashboard.notifications.title')}
-                    </Text>
+                <View className="flex-col gap-4">
+                  <View className="flex-row items-center justify-between gap-3">
+                    <View className="flex-row items-center gap-3">
+                      <Ionicons
+                        name="notifications-outline"
+                        size={22}
+                        color={SMART_PDF_DARK.accent}
+                      />
+                      <Text
+                        className="text-[18px] font-semibold tracking-[-0.4px]"
+                        style={uiStyles.titleText}
+                      >
+                        {t('settingsDashboard.notifications.title')}
+                      </Text>
+                    </View>
+
+                    <AppButton
+                      label={t(
+                        'settingsDashboard.notifications.testInlineAction',
+                      )}
+                      onPress={() =>
+                        handleTestNotification().catch(() => undefined)
+                      }
+                      variant="pill"
+                      compact
+                    />
                   </View>
 
-                  <AppButton
-                    label={t('settingsDashboard.notifications.testInlineAction')}
-                    onPress={() => handleTestNotification().catch(() => undefined)}
-                    variant="pill"
-                    compact
-                  />
+                  {notificationSummary ? (
+                    <Text
+                      className="text-[13px] leading-5"
+                      style={uiStyles.bodyText}
+                    >
+                      {t('settingsDashboard.notifications.summary', {
+                        permission: t(
+                          `settingsDashboard.notifications.permissionStates.${notificationSummary.permission}`,
+                        ),
+                        count: notificationSummary.scheduledCount,
+                      })}
+                    </Text>
+                  ) : null}
+
+                  <View className="flex-row gap-2">
+                    <AppButton
+                      label={t(
+                        'settingsDashboard.notifications.permissionAction',
+                      )}
+                      onPress={() =>
+                        handleNotificationPermission().catch(() => undefined)
+                      }
+                      disabled={isNotificationBusy}
+                      variant="primary"
+                      iconName="notifications-outline"
+                      style={{ flex: 1 }}
+                    />
+
+                    <AppButton
+                      label={t('settingsDashboard.notifications.syncAction')}
+                      onPress={() =>
+                        handleReminderSync().catch(() => undefined)
+                      }
+                      disabled={isNotificationBusy}
+                      variant="secondary"
+                      iconName="refresh-outline"
+                      style={{ flex: 1 }}
+                    />
+                  </View>
                 </View>
-
-                {notificationSummary ? (
-                  <Text className="text-[13px] leading-5" style={uiStyles.bodyText}>
-                    {t('settingsDashboard.notifications.summary', {
-                      permission: t(`settingsDashboard.notifications.permissionStates.${notificationSummary.permission}`),
-                      count: notificationSummary.scheduledCount,
-                    })}
-                  </Text>
-                ) : null}
-
-                <View className="flex-row gap-2">
-                  <AppButton
-                    label={t('settingsDashboard.notifications.permissionAction')}
-                    onPress={() => handleNotificationPermission().catch(() => undefined)}
-                    disabled={isNotificationBusy}
-                    variant="primary"
-                    iconName="notifications-outline"
-                    style={{ flex: 1 }}
-                  />
-
-                  <AppButton
-                    label={t('settingsDashboard.notifications.syncAction')}
-                    onPress={() => handleReminderSync().catch(() => undefined)}
-                    disabled={isNotificationBusy}
-                    variant="secondary"
-                    iconName="refresh-outline"
-                    style={{ flex: 1 }}
-                  />
-                </View>
-              </View>
               </SurfaceCard>
             ) : null}
 
             {showDataSection ? (
               <SurfaceCard>
-              <View className="flex-col gap-4">
-                <Text className="text-[18px] font-semibold tracking-[-0.4px]" style={uiStyles.titleText}>
-                  {t('settingsDashboard.dataTitle')}
-                </Text>
+                <View className="flex-col gap-6">
+                  <View className="flex-col gap-4">
+                    <Text
+                      className="text-[18px] font-semibold tracking-[-0.4px]"
+                      style={uiStyles.titleText}
+                    >
+                      {t('settingsDashboard.dataTitle')}
+                    </Text>
 
-                <View className="flex-row gap-2">
-                  <AppButton
-                    label={t('settingsDashboard.shortJsonAction')}
-                    onPress={() => setPendingExport('json')}
-                    disabled={isJsonBusy}
-                    variant="secondary"
-                    iconName="download-outline"
-                    style={{ flex: 1 }}
-                  />
+                    <View className="flex-row gap-2">
+                      <AppButton
+                        label={t('settingsDashboard.shortJsonAction')}
+                        onPress={() => setPendingExport('json')}
+                        disabled={isJsonBusy}
+                        variant="secondary"
+                        iconName="download-outline"
+                        style={{ flex: 1 }}
+                      />
 
-                  <AppButton
-                    label={t('settingsDashboard.shortExcelAction')}
-                    onPress={() => setPendingExport('excel')}
-                    disabled={isExcelBusy}
-                    variant="soft"
-                    iconName="download-outline"
-                    style={{ flex: 1 }}
-                  />
+                      <AppButton
+                        label={t('settingsDashboard.shortExcelAction')}
+                        onPress={() => setPendingExport('excel')}
+                        disabled={isExcelBusy}
+                        variant="soft"
+                        iconName="download-outline"
+                        style={{ flex: 1 }}
+                      />
+                    </View>
+                  </View>
+
+                  <View className="flex-col gap-4">
+                    <Text
+                      className="text-[18px] font-semibold tracking-[-0.4px]"
+                      style={uiStyles.titleText}
+                    >
+                      Demo verileri
+                    </Text>
+
+                    <View className="flex-row gap-2">
+                      <AppButton
+                        label="Demo verileri ekle"
+                        onPress={() => handleSeedDemo()}
+                        disabled={isDemoBusy}
+                        variant="primary"
+                        iconName="add-circle-outline"
+                        style={{ flex: 1 }}
+                      />
+
+                      <AppButton
+                        label="Demo verileri kaldır"
+                        onPress={() => handleClearDemo()}
+                        disabled={isDemoBusy}
+                        variant="secondary"
+                        iconName="trash-outline"
+                        style={{ flex: 1 }}
+                      />
+                    </View>
+                  </View>
                 </View>
-              </View>
               </SurfaceCard>
             ) : null}
 

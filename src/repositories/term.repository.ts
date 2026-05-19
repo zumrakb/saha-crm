@@ -47,9 +47,12 @@ export function insertTerm(data: TermWriteInput): number {
         termDuration,
         expectedDate,
         status,
-        arrivedAt
+        arrivedAt,
+        price,
+        currency,
+        stage
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `,
     [
       data.customerId,
@@ -59,6 +62,9 @@ export function insertTerm(data: TermWriteInput): number {
       data.expectedDate,
       data.status,
       data.arrivedAt,
+      data.price ?? 0,
+      data.currency ?? 'TRY',
+      data.stage ?? 'firsat',
     ],
   );
 
@@ -78,7 +84,10 @@ export function updateTerm(termId: number, data: TermWriteInput): void {
         termDuration = ?,
         expectedDate = ?,
         status = ?,
-        arrivedAt = ?
+        arrivedAt = ?,
+        price = ?,
+        currency = ?,
+        stage = ?
       WHERE id = ?
     `,
     [
@@ -89,6 +98,9 @@ export function updateTerm(termId: number, data: TermWriteInput): void {
       data.expectedDate,
       data.status,
       data.arrivedAt,
+      data.price ?? 0,
+      data.currency ?? 'TRY',
+      data.stage ?? 'firsat',
       termId,
     ],
   );
@@ -111,10 +123,11 @@ export function updateTermStatus(
     return;
   }
 
-  db.execute(
-    'UPDATE terms SET status = ?, arrivedAt = ? WHERE id = ?',
-    [status, status === TERM_STATUS.ARRIVED ? today : null, termId],
-  );
+  db.execute('UPDATE terms SET status = ?, arrivedAt = ? WHERE id = ?', [
+    status,
+    status === TERM_STATUS.ARRIVED ? today : null,
+    termId,
+  ]);
 
   if (status === TERM_STATUS.ARRIVED) {
     db.execute(
@@ -122,13 +135,19 @@ export function updateTermStatus(
         INSERT INTO activities (customerId, date, type, note, relatedTermId)
         VALUES (?, ?, ?, ?, ?)
       `,
-      [
-        customerId,
-        today,
-        ACTIVITY_TYPE.PRODUCT_ARRIVED,
-        null,
-        termId,
-      ],
+      [customerId, today, ACTIVITY_TYPE.PRODUCT_ARRIVED, null, termId],
     );
   }
+}
+
+export function updateTermStage(termId: number, stage: Term['stage']): void {
+  const db = getDB();
+  db.execute('UPDATE terms SET stage = ? WHERE id = ?', [stage, termId]);
+}
+
+export function deleteTermsByCustomerIds(customerIds: number[]): void {
+  if (customerIds.length === 0) return;
+  const db = getDB();
+  const placeholders = customerIds.map(() => '?').join(', ');
+  db.execute(`DELETE FROM terms WHERE customerId IN (${placeholders})`, customerIds);
 }

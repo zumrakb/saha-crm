@@ -42,6 +42,10 @@ interface FormValues {
   orderDate: string;
   expectedDate: string;
   note: string;
+  // --- YENİ ALANLAR ---
+  price: string; // Formda text olarak tutup dönüştüreceğiz
+  currency: string;
+  stage: Term['stage'];
 }
 
 function getDefaultValues(
@@ -57,6 +61,10 @@ function getDefaultValues(
     orderDate: term?.orderDate ?? today,
     expectedDate: term?.expectedDate ?? today,
     note: '',
+    // --- YENİ ALANLAR DEFAULT ---
+    price: term?.price ? term.price.toString() : '',
+    currency: term?.currency ?? 'TRY',
+    stage: term?.stage ?? 'firsat',
   };
 }
 
@@ -100,6 +108,16 @@ const NewTermModal: React.FC<NewTermModalProps> = ({
   const orderDateFieldRef = useRef<AppDateFieldHandle | null>(null);
   const expectedDateFieldRef = useRef<AppDateFieldHandle | null>(null);
   const noteInputRef = useRef<TextInput | null>(null);
+  const priceInputRef = useRef<TextInput | null>(null);
+
+  const STAGE_OPTIONS: { value: Term['stage']; label: string }[] = [
+    { value: 'firsat', label: 'Fırsat' }, // t('newTerm.stages.firsat') eklenebilir
+    { value: 'teklif_verildi', label: 'Teklif Verildi' },
+    { value: 'kazanildi', label: 'Kazanıldı' },
+    { value: 'kaybedildi', label: 'Kaybedildi' },
+  ];
+
+  const CURRENCY_OPTIONS = ['TRY', 'USD', 'EUR'];
 
   const schema = useMemo(
     () =>
@@ -112,7 +130,10 @@ const NewTermModal: React.FC<NewTermModalProps> = ({
             })
             .int()
             .positive(t('newTerm.validation.customerId')),
-          productName: z.string().trim().min(1, t('newTerm.validation.productName')),
+          productName: z
+            .string()
+            .trim()
+            .min(1, t('newTerm.validation.productName')),
           orderDate: z
             .string()
             .trim()
@@ -122,6 +143,15 @@ const NewTermModal: React.FC<NewTermModalProps> = ({
             .trim()
             .regex(/^\d{4}-\d{2}-\d{2}$/, t('newTerm.validation.expectedDate')),
           note: z.string().trim(),
+          // --- YENİ ALANLAR VALIDASYON ---
+          price: z.string().trim(), // Boş bırakılabilir, parse ederken 0 yaparız
+          currency: z.string().trim(),
+          stage: z.enum([
+            'firsat',
+            'teklif_verildi',
+            'kazanildi',
+            'kaybedildi',
+          ] as const),
         })
         .refine(
           values =>
@@ -149,6 +179,8 @@ const NewTermModal: React.FC<NewTermModalProps> = ({
 
   const orderDate = watch('orderDate');
   const selectedCustomerId = watch('customerId');
+  const selectedStage = watch('stage');
+  const selectedCurrency = watch('currency');
 
   useEffect(() => {
     if (visible && customerId === undefined) {
@@ -174,6 +206,8 @@ const NewTermModal: React.FC<NewTermModalProps> = ({
       return;
     }
 
+    const numericPrice = parseFloat(values.price.replace(',', '.')) || 0;
+
     const payload = {
       customerId: values.customerId,
       productName: values.productName.trim(),
@@ -186,6 +220,10 @@ const NewTermModal: React.FC<NewTermModalProps> = ({
       expectedDate: values.expectedDate.trim(),
       status: term?.status ?? TERM_STATUS.PENDING,
       arrivedAt: term?.status === TERM_STATUS.ARRIVED ? term.arrivedAt : null,
+      // --- YENİ EKLENEN FINANSAL VERİLER ---
+      price: numericPrice,
+      currency: values.currency,
+      stage: values.stage,
     };
 
     if (term) {
@@ -216,10 +254,7 @@ const NewTermModal: React.FC<NewTermModalProps> = ({
   });
 
   return (
-    <BottomSheetModal
-      visible={visible}
-      onClose={closeModal}
-    >
+    <BottomSheetModal visible={visible} onClose={closeModal}>
       <View className="flex-col gap-4" style={{ flexShrink: 1 }}>
         <View className="flex-row items-center justify-between gap-3">
           <Text
@@ -262,9 +297,11 @@ const NewTermModal: React.FC<NewTermModalProps> = ({
                     return (
                       <TouchableOpacity
                         key={customer.id}
-                        onPress={() => setValue('customerId', customer.id, {
-                          shouldValidate: true,
-                        })}
+                        onPress={() =>
+                          setValue('customerId', customer.id, {
+                            shouldValidate: true,
+                          })
+                        }
                         activeOpacity={0.85}
                         className="rounded-full px-4 py-2.5"
                         style={
@@ -276,9 +313,7 @@ const NewTermModal: React.FC<NewTermModalProps> = ({
                         <Text
                           className="text-sm font-medium"
                           style={
-                            isSelected
-                              ? uiStyles.titleText
-                              : uiStyles.bodyText
+                            isSelected ? uiStyles.titleText : uiStyles.bodyText
                           }
                         >
                           {customer.companyName}
@@ -296,103 +331,219 @@ const NewTermModal: React.FC<NewTermModalProps> = ({
             ) : null}
 
             <Controller
-                    control={control}
-                    name="productName"
-                    render={({ field: { onBlur, onChange, value } }) => (
-                      <View className="flex-col gap-2">
-                        <Text
-                          className="text-sm font-semibold"
-                          style={uiStyles.titleText}
-                        >
-                          {t('newTerm.fields.productName')}
-                        </Text>
-                        <TextInput
-                          value={value}
-                          onChangeText={onChange}
-                          onBlur={onBlur}
-                          returnKeyType="next"
-                          onSubmitEditing={() => orderDateFieldRef.current?.openPicker()}
-                          placeholder={t('newTerm.placeholders.productName')}
-                          placeholderTextColor={SMART_PDF_DARK.muted}
-                          underlineColorAndroid="transparent"
-                          selectionColor={SMART_PDF_DARK.accent}
-                          className={TEXT_INPUT_CLASSNAME}
-                          style={[
-                            uiStyles.inputBase,
-                            errors.productName ? uiStyles.inputError : null,
-                          ]}
-                        />
-                        {errors.productName ? (
-                          <Text className="text-sm" style={uiStyles.errorText}>
-                            {errors.productName.message}
-                          </Text>
-                        ) : null}
-                      </View>
-                    )}
+              control={control}
+              name="productName"
+              render={({ field: { onBlur, onChange, value } }) => (
+                <View className="flex-col gap-2">
+                  <Text
+                    className="text-sm font-semibold"
+                    style={uiStyles.titleText}
+                  >
+                    {t('newTerm.fields.productName')}
+                  </Text>
+                  <TextInput
+                    value={value}
+                    onChangeText={onChange}
+                    onBlur={onBlur}
+                    returnKeyType="next"
+                    onSubmitEditing={() => priceInputRef.current?.focus()}
+                    placeholder={t('newTerm.placeholders.productName')}
+                    placeholderTextColor={SMART_PDF_DARK.muted}
+                    underlineColorAndroid="transparent"
+                    selectionColor={SMART_PDF_DARK.accent}
+                    className={TEXT_INPUT_CLASSNAME}
+                    style={[
+                      uiStyles.inputBase,
+                      errors.productName ? uiStyles.inputError : null,
+                    ]}
                   />
+                  {errors.productName ? (
+                    <Text className="text-sm" style={uiStyles.errorText}>
+                      {errors.productName.message}
+                    </Text>
+                  ) : null}
+                </View>
+              )}
+            />
 
-            <Controller
-                    control={control}
-                    name="orderDate"
-                    render={({ field: { onChange, value } }) => (
-                      <AppDateField
-                        ref={orderDateFieldRef}
-                        label={t('newTerm.fields.orderDate')}
+            {/* --- YENİ ALAN: FİYAT VE PARA BİRİMİ --- */}
+            <View className="flex-row gap-3">
+              <View className="flex-1 flex-col gap-2">
+                <Controller
+                  control={control}
+                  name="price"
+                  render={({ field: { onBlur, onChange, value } }) => (
+                    <View className="flex-col gap-2">
+                      <Text
+                        className="text-sm font-semibold"
+                        style={uiStyles.titleText}
+                      >
+                        Tutar (İsteğe Bağlı) {/* t('newTerm.fields.price') */}
+                      </Text>
+                      <TextInput
+                        ref={priceInputRef}
                         value={value}
-                        onChange={onChange}
-                        onChangeComplete={() => expectedDateFieldRef.current?.openPicker()}
-                        maximumDate={new Date()}
-                        error={errors.orderDate?.message}
+                        onChangeText={onChange}
+                        onBlur={onBlur}
+                        keyboardType="numeric"
+                        returnKeyType="next"
+                        onSubmitEditing={() =>
+                          orderDateFieldRef.current?.openPicker()
+                        }
+                        placeholder="Örn: 1500"
+                        placeholderTextColor={SMART_PDF_DARK.muted}
+                        underlineColorAndroid="transparent"
+                        selectionColor={SMART_PDF_DARK.accent}
+                        className={TEXT_INPUT_CLASSNAME}
+                        style={uiStyles.inputBase}
                       />
-                    )}
-                  />
+                    </View>
+                  )}
+                />
+              </View>
 
-            <Controller
-                    control={control}
-                    name="expectedDate"
-                    render={({ field: { onChange, value } }) => (
-                      <AppDateField
-                        ref={expectedDateFieldRef}
-                        label={t('newTerm.fields.expectedDate')}
-                        value={value}
-                        onChange={onChange}
-                        onChangeComplete={() => noteInputRef.current?.focus()}
-                        minimumDate={parseISODate(orderDate)}
-                        error={errors.expectedDate?.message}
-                      />
-                    )}
-                  />
-
-            <Controller
-                    control={control}
-                    name="note"
-                    render={({ field: { onBlur, onChange, value } }) => (
-                      <View className="flex-col gap-2">
+              <View className="flex-col gap-2">
+                <Text
+                  className="text-sm font-semibold"
+                  style={uiStyles.titleText}
+                >
+                  Para Birimi
+                </Text>
+                <View className="flex-row gap-1">
+                  {CURRENCY_OPTIONS.map(currency => {
+                    const isSelected = selectedCurrency === currency;
+                    return (
+                      <TouchableOpacity
+                        key={currency}
+                        onPress={() => setValue('currency', currency)}
+                        activeOpacity={0.85}
+                        className="rounded-xl px-3 py-3"
+                        style={
+                          isSelected
+                            ? uiStyles.accentSurface
+                            : uiStyles.mutedSurface
+                        }
+                      >
                         <Text
-                          className="text-sm font-semibold"
-                          style={uiStyles.titleText}
+                          className="text-sm font-medium"
+                          style={
+                            isSelected ? uiStyles.titleText : uiStyles.bodyText
+                          }
                         >
-                          {t('newTerm.fields.note')}
+                          {currency}
                         </Text>
-                        <TextInput
-                          ref={noteInputRef}
-                          value={value}
-                          onChangeText={onChange}
-                          onBlur={onBlur}
-                          returnKeyType="done"
-                          onSubmitEditing={onSubmit}
-                          placeholder={t('newTerm.placeholders.note')}
-                          placeholderTextColor={SMART_PDF_DARK.muted}
-                          multiline
-                          textAlignVertical="top"
-                          underlineColorAndroid="transparent"
-                          selectionColor={SMART_PDF_DARK.accent}
-                          className={TEXT_INPUT_CLASSNAME}
-                          style={uiStyles.textArea}
-                        />
-                      </View>
-                    )}
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </View>
+            </View>
+
+            {/* --- YENİ ALAN: SATIŞ AŞAMASI --- */}
+            <View className="flex-col gap-2 pt-1 pb-1">
+              <Text
+                className="text-sm font-semibold"
+                style={uiStyles.titleText}
+              >
+                Satış Aşaması
+              </Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ gap: 8 }}
+              >
+                {STAGE_OPTIONS.map(stage => {
+                  const isSelected = selectedStage === stage.value;
+                  return (
+                    <TouchableOpacity
+                      key={stage.value}
+                      onPress={() => setValue('stage', stage.value)}
+                      activeOpacity={0.85}
+                      className="rounded-full px-4 py-2"
+                      style={
+                        isSelected
+                          ? uiStyles.accentSurface
+                          : uiStyles.mutedSurface
+                      }
+                    >
+                      <Text
+                        className="text-sm font-medium"
+                        style={
+                          isSelected ? uiStyles.titleText : uiStyles.bodyText
+                        }
+                      >
+                        {stage.label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            </View>
+
+            <Controller
+              control={control}
+              name="orderDate"
+              render={({ field: { onChange, value } }) => (
+                <AppDateField
+                  ref={orderDateFieldRef}
+                  label={t('newTerm.fields.orderDate')}
+                  value={value}
+                  onChange={onChange}
+                  onChangeComplete={() =>
+                    expectedDateFieldRef.current?.openPicker()
+                  }
+                  maximumDate={new Date()}
+                  error={errors.orderDate?.message}
+                />
+              )}
+            />
+
+            <Controller
+              control={control}
+              name="expectedDate"
+              render={({ field: { onChange, value } }) => (
+                <AppDateField
+                  ref={expectedDateFieldRef}
+                  label={t('newTerm.fields.expectedDate')}
+                  value={value}
+                  onChange={onChange}
+                  onChangeComplete={() => noteInputRef.current?.focus()}
+                  minimumDate={parseISODate(orderDate)}
+                  error={errors.expectedDate?.message}
+                />
+              )}
+            />
+
+            <Controller
+              control={control}
+              name="note"
+              render={({ field: { onBlur, onChange, value } }) => (
+                <View className="flex-col gap-2">
+                  <Text
+                    className="text-sm font-semibold"
+                    style={uiStyles.titleText}
+                  >
+                    {t('newTerm.fields.note')}
+                  </Text>
+                  <TextInput
+                    ref={noteInputRef}
+                    value={value}
+                    onChangeText={onChange}
+                    onBlur={onBlur}
+                    returnKeyType="done"
+                    onSubmitEditing={onSubmit}
+                    placeholder={t('newTerm.placeholders.note')}
+                    placeholderTextColor={SMART_PDF_DARK.muted}
+                    multiline
+                    textAlignVertical="top"
+                    underlineColorAndroid="transparent"
+                    selectionColor={SMART_PDF_DARK.accent}
+                    className={TEXT_INPUT_CLASSNAME}
+                    style={uiStyles.textArea}
                   />
+                </View>
+              )}
+            />
 
             {submitError ? (
               <Text className="text-sm" style={uiStyles.errorText}>
@@ -408,8 +559,8 @@ const NewTermModal: React.FC<NewTermModalProps> = ({
               isSubmitting
                 ? t('newTerm.submitting')
                 : term
-                  ? t('newTerm.editSubmit')
-                  : t('newTerm.submit')
+                ? t('newTerm.editSubmit')
+                : t('newTerm.submit')
             }
             onPress={onSubmit}
             variant="primary"

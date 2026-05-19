@@ -1,0 +1,6 @@
+- [ ] Repo yapısını incele (demoData.ts, customer.repository.ts, SettingsScreen.tsx)
+- [ ] Demo veri tespit kriterini düzelt: `getDemoCustomerIds()` sadece seed edilen demo kayıtlara ait olmalı
+- [ ] `seedDemoData()` eklerken demo işareti (email pattern yerine güvenli imza) oluştur
+- [ ] `clearDemoData()` sadece demo işareti olan kayıtları silsin (kendi eklediklerini etkilemesin)
+- [ ] SettingsScreen UI: demo ekle/kaldır butonlarını doğru handler’lara bağla (zaten bağlıysa doğrula)
+- [x] TypeScript derleme / test / minimal manuel kontrol (demo ekle -> kendi kayıt ekle -> demo kaldır -> kendi kayıt kalsın)
