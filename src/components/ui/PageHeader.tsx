@@ -25,7 +25,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
         <View className="flex-1 flex-col gap-1.5">
           <View className="flex-row flex-wrap items-center gap-3">
             <Text
-              className="flex-shrink text-[26px] font-bold tracking-[-0.8px]"
+              className="flex-shrink text-[28px] font-bold tracking-[-1px]"
               style={{ color: SMART_PDF_DARK.text }}
             >
               {title}
@@ -35,7 +35,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
 
           {subtitle ? (
             <Text
-              className="text-[14px] leading-6"
+              className="text-[14px] leading-[22px]"
               style={{ color: SMART_PDF_DARK.muted }}
             >
               {subtitle}

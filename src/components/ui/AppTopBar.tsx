@@ -16,84 +16,62 @@ interface AppTopBarProps {
   right?: React.ReactNode;
 }
 
-const toneMap = {
-  emerald: '#E4F4EC',
-  sage: '#EAF5EF',
-  neutral: '#EBF0EB',
-} as const;
-
-const textToneMap = {
-  emerald: '#4F8D78',
-  sage: '#5F8B77',
-  neutral: '#5D6762',
-} as const;
-
 export const AvatarCircle: React.FC<AvatarCircleProps> = ({
   label,
   image,
-  tone = 'emerald',
-  size = 42,
+  size = 36,
 }) => {
-  if (image === 'profile') {
-    return (
-      <View
-        style={{
-          width: size,
-          height: size,
-          borderRadius: size / 2,
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: toneMap[tone],
-        }}
-      >
-        <Text
-          style={{
-            color: textToneMap[tone],
-            fontSize: Math.max(13, size * 0.34),
-            fontWeight: '700',
-          }}
-        >
-          SC
-        </Text>
-      </View>
-    );
-  }
+  const bg = SMART_PDF_DARK.accentSurface;
+  const fg = SMART_PDF_DARK.accent;
+  const radius = Math.max(8, Math.round(size * 0.28));
+  const text = image === 'profile' ? 'SC' : (label ?? '');
 
   return (
     <View
       style={{
         width: size,
         height: size,
-        borderRadius: size / 2,
+        borderRadius: radius,
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: toneMap[tone],
+        backgroundColor: bg,
       }}
     >
       <Text
         style={{
-          color: textToneMap[tone],
-          fontSize: Math.max(14, size * 0.38),
-          fontWeight: '600',
+          color: fg,
+          fontSize: Math.max(11, Math.round(size * 0.33)),
+          fontWeight: '700',
+          letterSpacing: 0.2,
         }}
       >
-        {label}
+        {text}
       </Text>
     </View>
   );
 };
 
-export const BrandWordmark: React.FC<{ label?: string }> = ({ label = 'Saha CRM' }) => (
-  <Text
-    style={{
-      color: SMART_PDF_DARK.accent,
-      fontSize: 16,
-      fontWeight: '700',
-      letterSpacing: 1.1,
-    }}
-  >
-    {label}
-  </Text>
+export const BrandWordmark: React.FC<{ label?: string }> = ({ label = 'Saha' }) => (
+  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}>
+    <View
+      style={{
+        width: 7,
+        height: 7,
+        borderRadius: 3.5,
+        backgroundColor: SMART_PDF_DARK.accent,
+      }}
+    />
+    <Text
+      style={{
+        color: SMART_PDF_DARK.text,
+        fontSize: 15,
+        fontWeight: '700',
+        letterSpacing: -0.3,
+      }}
+    >
+      {label}
+    </Text>
+  </View>
 );
 
 export const SearchGlyph: React.FC<{ onPress?: () => void }> = ({ onPress }) => {
@@ -108,8 +86,8 @@ export const SearchGlyph: React.FC<{ onPress?: () => void }> = ({ onPress }) => 
     >
       <Ionicons
         name="search-outline"
-        size={22}
-        color={SMART_PDF_DARK.accent}
+        size={20}
+        color={SMART_PDF_DARK.muted}
       />
     </View>
   );
@@ -119,7 +97,7 @@ export const SearchGlyph: React.FC<{ onPress?: () => void }> = ({ onPress }) => 
   }
 
   return (
-    <TouchableOpacity onPress={onPress} activeOpacity={0.85}>
+    <TouchableOpacity onPress={onPress} activeOpacity={0.75}>
       {content}
     </TouchableOpacity>
   );

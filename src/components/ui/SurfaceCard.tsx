@@ -12,8 +12,8 @@ interface SurfaceCardProps {
 }
 
 const toneClassNames: Record<SurfaceTone, string> = {
-  default: 'rounded-[24px] p-5',
-  soft: 'rounded-[24px] p-5',
+  default: 'rounded-[18px] p-4',
+  soft: 'rounded-[18px] p-4',
 };
 
 const SurfaceCard: React.FC<SurfaceCardProps> = ({

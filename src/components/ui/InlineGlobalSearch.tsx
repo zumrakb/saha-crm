@@ -91,12 +91,12 @@ const InlineGlobalSearch: React.FC<InlineGlobalSearchProps> = ({
     >
       <View className="gap-2">
         <View
-          className="flex-row items-center gap-3 rounded-[20px] px-4"
+          className="flex-row items-center gap-3 rounded-[16px] px-4"
           style={uiStyles.searchContainer}
         >
           <Ionicons
             name="search-outline"
-            size={17}
+            size={16}
             color={SMART_PDF_DARK.muted}
           />
 
@@ -106,7 +106,7 @@ const InlineGlobalSearch: React.FC<InlineGlobalSearchProps> = ({
             onChangeText={onChangeText}
             placeholder={placeholder ?? t('common.pageSearchPlaceholder')}
             placeholderTextColor={SMART_PDF_DARK.muted}
-            className="flex-1 py-0 text-[13px]"
+            className="flex-1 py-0 text-[14px]"
             autoCapitalize="none"
             autoCorrect={false}
             returnKeyType="search"
@@ -120,11 +120,11 @@ const InlineGlobalSearch: React.FC<InlineGlobalSearchProps> = ({
               onChangeText('');
               onClose();
             }}
-            activeOpacity={0.85}
+            activeOpacity={0.75}
           >
             <Ionicons
-              name="close-outline"
-              size={18}
+              name="close-circle"
+              size={17}
               color={SMART_PDF_DARK.muted}
             />
           </TouchableOpacity>

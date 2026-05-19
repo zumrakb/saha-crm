@@ -37,7 +37,7 @@ const AppButton: React.FC<AppButtonProps> = ({
   activeOpacity = 0.85,
   iconColorOverride,
 }) => {
-  const { colors, isDark } = useAppTheme();
+  const { colors } = useAppTheme();
   const variantStyles: Record<ButtonVariant, ViewStyle> = {
     primary: {
       backgroundColor: colors.accent,
@@ -49,30 +49,32 @@ const AppButton: React.FC<AppButtonProps> = ({
       backgroundColor: colors.accentSurface,
     },
     pill: {
-      backgroundColor: isDark ? colors.surface : 'rgba(255,255,255,0.78)',
+      backgroundColor: colors.surfaceAlt,
     },
   };
 
   const labelColors: Record<ButtonVariant, string> = {
     primary: '#FFFFFF',
     secondary: colors.text,
-    soft: isDark ? colors.text : colors.accentMuted,
+    soft: colors.accent,
     pill: colors.text,
   };
 
   const iconColors: Record<ButtonVariant, string> = {
     primary: '#FFFFFF',
-    secondary: colors.text,
-    soft: isDark ? colors.text : colors.accentMuted,
-    pill: isDark ? colors.accent : colors.text,
+    secondary: colors.muted,
+    soft: colors.accent,
+    pill: colors.accent,
   };
 
   const minHeight = compact ? CONTROL_SIZES.buttonCompact : CONTROL_SIZES.button;
   const radiusClassName = iconOnly
     ? 'rounded-full'
-    : compact
-      ? 'rounded-full px-4'
-      : 'rounded-full px-5';
+    : variant === 'pill'
+      ? 'rounded-full px-5'
+      : compact
+        ? 'rounded-[12px] px-4'
+        : 'rounded-[14px] px-5';
   const iconSize = compact ? 16 : 18;
 
   return (

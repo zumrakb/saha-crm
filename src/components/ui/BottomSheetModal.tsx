@@ -122,22 +122,24 @@ const BottomSheetModal: React.FC<BottomSheetModalProps> = ({
       {...panResponder.panHandlers}
     >
       <View
-        className="px-5 pt-4"
+        className="px-5 pt-3"
         style={[
           {
-            backgroundColor: SMART_PDF_DARK.background,
+            backgroundColor: SMART_PDF_DARK.surface,
             paddingBottom: Math.max(insets.bottom, 16) + 14,
           },
         ]}
       >
         <Pressable
           onPress={onClose}
-          hitSlop={{ top: 12, bottom: 12, left: 24, right: 24 }}
-          className="mb-4 self-center"
+          hitSlop={{ top: 16, bottom: 16, left: 32, right: 32 }}
+          className="mb-5 self-center"
         >
           <View
-            className="h-1.5 w-14 rounded-full"
-            style={uiStyles.modalHandle}
+            style={[
+              uiStyles.modalHandle,
+              { height: 4, width: 40, borderRadius: 2 },
+            ]}
           />
         </Pressable>
         {children}
