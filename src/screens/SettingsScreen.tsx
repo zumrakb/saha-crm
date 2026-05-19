@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
-import { Alert, Platform, ScrollView, Text, View } from 'react-native';
+import { Alert, Platform, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { FileSystem } from 'react-native-file-access';
@@ -14,11 +14,10 @@ import AppTopBar, {
 } from '../components/ui/AppTopBar';
 import BottomSheetModal from '../components/ui/BottomSheetModal';
 import InlineGlobalSearch from '../components/ui/InlineGlobalSearch';
-import SurfaceCard from '../components/ui/SurfaceCard';
 import {
   FLOATING_TAB_BAR,
   SMART_PDF_DARK,
-  uiStyles,
+  surfaceStyles,
   useAppTheme,
   type AppThemePreference,
 } from '../components/ui/theme';
@@ -40,6 +39,151 @@ const APP_VERSION = '0.0.1';
 
 type ExportKind = 'json' | 'excel' | null;
 
+// ─── Local UI helpers ────────────────────────────────────────────────────────
+
+function SectionLabel({ children }: { children: string }) {
+  return (
+    <Text
+      style={{
+        fontSize: 11,
+        fontWeight: '600',
+        letterSpacing: 0.9,
+        textTransform: 'uppercase',
+        color: SMART_PDF_DARK.muted,
+        paddingHorizontal: 4,
+      }}
+    >
+      {children}
+    </Text>
+  );
+}
+
+function IconBox({
+  name,
+  bg,
+  color,
+}: {
+  name: React.ComponentProps<typeof Ionicons>['name'];
+  bg: string;
+  color: string;
+}) {
+  return (
+    <View
+      style={{
+        width: 32,
+        height: 32,
+        borderRadius: 9,
+        backgroundColor: bg,
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexShrink: 0,
+      }}
+    >
+      <Ionicons name={name} size={16} color={color} />
+    </View>
+  );
+}
+
+function RowDivider() {
+  return (
+    <View
+      style={{
+        height: 1,
+        backgroundColor: SMART_PDF_DARK.divider,
+        marginLeft: 56,
+      }}
+    />
+  );
+}
+
+interface SettingRowProps {
+  iconBox: React.ReactNode;
+  title: string;
+  subtitle?: string;
+  right?: React.ReactNode;
+  onPress?: () => void;
+  disabled?: boolean;
+  dangerous?: boolean;
+}
+
+function SettingRow({
+  iconBox,
+  title,
+  subtitle,
+  right,
+  onPress,
+  disabled,
+  dangerous,
+}: SettingRowProps) {
+  const inner = (
+    <View
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 13,
+        paddingHorizontal: 16,
+        gap: 12,
+        minHeight: 56,
+        opacity: disabled ? 0.5 : 1,
+      }}
+    >
+      {iconBox}
+      <View style={{ flex: 1, gap: 1 }}>
+        <Text
+          style={{
+            fontSize: 15,
+            fontWeight: '500',
+            color: dangerous ? SMART_PDF_DARK.danger : SMART_PDF_DARK.text,
+          }}
+        >
+          {title}
+        </Text>
+        {subtitle ? (
+          <Text style={{ fontSize: 12, color: SMART_PDF_DARK.muted, lineHeight: 17 }}>
+            {subtitle}
+          </Text>
+        ) : null}
+      </View>
+      {right ?? (
+        onPress
+          ? <Ionicons name="chevron-forward" size={15} color={SMART_PDF_DARK.muted} />
+          : null
+      )}
+    </View>
+  );
+
+  if (!onPress) {
+    return inner;
+  }
+
+  return (
+    <TouchableOpacity onPress={onPress} disabled={disabled} activeOpacity={0.72}>
+      {inner}
+    </TouchableOpacity>
+  );
+}
+
+function SettingGroup({ children }: { children: React.ReactNode }) {
+  return (
+    <View
+      style={[
+        surfaceStyles.card as object,
+        {
+          borderRadius: 16,
+          padding: 0,
+          overflow: 'hidden',
+          shadowOpacity: 0,
+          elevation: 0,
+        },
+      ]}
+    >
+      {children}
+    </View>
+  );
+}
+
+// ─── Screen ──────────────────────────────────────────────────────────────────
+
 const SettingsScreen: React.FC = () => {
   const { t, i18n } = useTranslation();
   const { preference, setPreference } = useAppTheme();
@@ -55,40 +199,28 @@ const SettingsScreen: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
 
   const currentLanguage = (i18n.language || 'en').slice(0, 2);
+
   const languageButtons = [
-    {
-      code: 'en',
-      label: t('languages.english'),
-      icon: 'language-outline' as const,
-    },
-    {
-      code: 'tr',
-      label: t('languages.turkish'),
-      icon: 'globe-outline' as const,
-    },
+    { code: 'en', label: t('languages.english'), icon: 'language-outline' as const },
+    { code: 'tr', label: t('languages.turkish'), icon: 'globe-outline' as const },
   ];
+
   const themeButtons: Array<{
     code: AppThemePreference;
     label: string;
     iconName: React.ComponentProps<typeof Ionicons>['name'];
   }> = [
-    {
-      code: 'light',
-      label: t('settingsDashboard.themeOptions.light'),
-      iconName: 'sunny-outline',
-    },
-    {
-      code: 'dark',
-      label: t('settingsDashboard.themeOptions.dark'),
-      iconName: 'moon-outline',
-    },
+    { code: 'light', label: t('settingsDashboard.themeOptions.light'), iconName: 'sunny-outline' },
+    { code: 'dark', label: t('settingsDashboard.themeOptions.dark'), iconName: 'moon-outline' },
   ];
+
   const normalizedSearchQuery = searchQuery.trim().toLocaleLowerCase('tr-TR');
+
+  // ─── Handlers ──────────────────────────────────────────────────────────────
 
   const refreshNotificationSummary = useCallback(async () => {
     try {
-      const summary = await getNotificationDebugSummary();
-      setNotificationSummary(summary);
+      setNotificationSummary(await getNotificationDebugSummary());
     } catch {
       setNotificationSummary(null);
     }
@@ -96,11 +228,9 @@ const SettingsScreen: React.FC = () => {
 
   const handleNotificationPermission = useCallback(async () => {
     setIsNotificationBusy(true);
-
     try {
       const permission = await requestNotificationPermission();
       await refreshNotificationSummary();
-
       Alert.alert(
         t('settingsDashboard.notifications.permissionResultTitle'),
         t(`settingsDashboard.notifications.permissionStates.${permission}`),
@@ -108,9 +238,7 @@ const SettingsScreen: React.FC = () => {
     } catch (error) {
       Alert.alert(
         t('settingsDashboard.notifications.errorTitle'),
-        error instanceof Error
-          ? error.message
-          : t('settingsDashboard.notifications.errorBody'),
+        error instanceof Error ? error.message : t('settingsDashboard.notifications.errorBody'),
       );
     } finally {
       setIsNotificationBusy(false);
@@ -119,11 +247,9 @@ const SettingsScreen: React.FC = () => {
 
   const handleTestNotification = useCallback(async () => {
     setIsNotificationBusy(true);
-
     try {
       await showTestNotification();
       await refreshNotificationSummary();
-
       Alert.alert(
         t('settingsDashboard.notifications.testSuccessTitle'),
         t('settingsDashboard.notifications.testSuccessBody'),
@@ -131,9 +257,7 @@ const SettingsScreen: React.FC = () => {
     } catch (error) {
       Alert.alert(
         t('settingsDashboard.notifications.errorTitle'),
-        error instanceof Error
-          ? error.message
-          : t('settingsDashboard.notifications.errorBody'),
+        error instanceof Error ? error.message : t('settingsDashboard.notifications.errorBody'),
       );
     } finally {
       setIsNotificationBusy(false);
@@ -142,11 +266,9 @@ const SettingsScreen: React.FC = () => {
 
   const handleReminderSync = useCallback(async () => {
     setIsNotificationBusy(true);
-
     try {
       await syncTermReminders();
       await refreshNotificationSummary();
-
       Alert.alert(
         t('settingsDashboard.notifications.syncSuccessTitle'),
         t('settingsDashboard.notifications.syncSuccessBody'),
@@ -154,65 +276,40 @@ const SettingsScreen: React.FC = () => {
     } catch (error) {
       Alert.alert(
         t('settingsDashboard.notifications.errorTitle'),
-        error instanceof Error
-          ? error.message
-          : t('settingsDashboard.notifications.errorBody'),
+        error instanceof Error ? error.message : t('settingsDashboard.notifications.errorBody'),
       );
     } finally {
       setIsNotificationBusy(false);
     }
   }, [refreshNotificationSummary, t]);
 
-  useEffect(() => {
-    refreshNotificationSummary().catch(() => undefined);
-  }, [refreshNotificationSummary]);
-
-  useFocusEffect(
-    useCallback(() => {
-      return () => {
-        setIsSearchVisible(false);
-        setSearchQuery('');
-      };
-    }, []),
-  );
-
-  const deliverFile = useCallback(
-    async (file: BackupExportFile) => {
-      if (Platform.OS === 'android') {
-        await FileSystem.cpExternal(file.path, file.filename, 'downloads');
-        Alert.alert(
-          t('settingsDashboard.downloadSuccessTitle'),
-          t('settingsDashboard.downloadSuccessBody', {
-            filename: file.filename,
-          }),
-        );
-        return;
-      }
-
-      await Share.open({
-        url: `file://${file.path}`,
-        type: file.mimeType,
-        filename: file.filename,
-        failOnCancel: false,
-        saveToFiles: true,
-        title: file.filename,
-      });
-    },
-    [t],
-  );
+  const deliverFile = useCallback(async (file: BackupExportFile) => {
+    if (Platform.OS === 'android') {
+      await FileSystem.cpExternal(file.path, file.filename, 'downloads');
+      Alert.alert(
+        t('settingsDashboard.downloadSuccessTitle'),
+        t('settingsDashboard.downloadSuccessBody', { filename: file.filename }),
+      );
+      return;
+    }
+    await Share.open({
+      url: `file://${file.path}`,
+      type: file.mimeType,
+      filename: file.filename,
+      failOnCancel: false,
+      saveToFiles: true,
+      title: file.filename,
+    });
+  }, [t]);
 
   const handleJsonDownload = useCallback(async () => {
     setIsJsonBusy(true);
-
     try {
-      const jsonFile = await exportBackupJsonFile();
-      await deliverFile(jsonFile);
+      await deliverFile(await exportBackupJsonFile());
     } catch (error) {
       Alert.alert(
         t('settingsDashboard.exportErrorTitle'),
-        error instanceof Error
-          ? error.message
-          : t('settingsDashboard.exportErrorBody'),
+        error instanceof Error ? error.message : t('settingsDashboard.exportErrorBody'),
       );
     } finally {
       setIsJsonBusy(false);
@@ -222,16 +319,12 @@ const SettingsScreen: React.FC = () => {
 
   const handleExcelExport = useCallback(async () => {
     setIsExcelBusy(true);
-
     try {
-      const excelFile = await exportBackupExcelFile();
-      await deliverFile(excelFile);
+      await deliverFile(await exportBackupExcelFile());
     } catch (error) {
       Alert.alert(
         t('settingsDashboard.exportExcelErrorTitle'),
-        error instanceof Error
-          ? error.message
-          : t('settingsDashboard.exportExcelErrorBody'),
+        error instanceof Error ? error.message : t('settingsDashboard.exportExcelErrorBody'),
       );
     } finally {
       setIsExcelBusy(false);
@@ -242,10 +335,7 @@ const SettingsScreen: React.FC = () => {
   const handleConfirmExport = useCallback(() => {
     if (pendingExport === 'json') {
       handleJsonDownload().catch(() => undefined);
-      return;
-    }
-
-    if (pendingExport === 'excel') {
+    } else if (pendingExport === 'excel') {
       handleExcelExport().catch(() => undefined);
     }
   }, [handleExcelExport, handleJsonDownload, pendingExport]);
@@ -255,15 +345,9 @@ const SettingsScreen: React.FC = () => {
     try {
       const result = seedDemoData();
       if (result.alreadyExists) {
-        Alert.alert(
-          'Demo Veri',
-          'Demo veriler zaten yüklü. Önce kaldırıp tekrar ekleyebilirsin.',
-        );
+        Alert.alert('Demo Veri', 'Demo veriler zaten yüklü. Önce kaldırıp tekrar ekleyebilirsin.');
       } else {
-        Alert.alert(
-          'Demo Veri Eklendi',
-          `${result.customerCount} müşteri ve ${result.termCount} vade eklendi.`,
-        );
+        Alert.alert('Demo Veri Eklendi', `${result.customerCount} müşteri ve ${result.termCount} vade eklendi.`);
       }
     } finally {
       setIsDemoBusy(false);
@@ -298,25 +382,30 @@ const SettingsScreen: React.FC = () => {
     );
   }, []);
 
+  useEffect(() => {
+    refreshNotificationSummary().catch(() => undefined);
+  }, [refreshNotificationSummary]);
+
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        setIsSearchVisible(false);
+        setSearchQuery('');
+      };
+    }, []),
+  );
+
+  // ─── Search visibility ──────────────────────────────────────────────────────
+
   const showThemeSection =
     !normalizedSearchQuery ||
-    [
-      t('settingsDashboard.themeTitle'),
-      ...themeButtons.map(button => button.label),
-    ]
-      .join(' ')
-      .toLocaleLowerCase('tr-TR')
-      .includes(normalizedSearchQuery);
+    [t('settingsDashboard.themeTitle'), ...themeButtons.map(b => b.label)]
+      .join(' ').toLocaleLowerCase('tr-TR').includes(normalizedSearchQuery);
 
   const showLanguageSection =
     !normalizedSearchQuery ||
-    [
-      t('settingsDashboard.languageTitle'),
-      ...languageButtons.map(button => button.label),
-    ]
-      .join(' ')
-      .toLocaleLowerCase('tr-TR')
-      .includes(normalizedSearchQuery);
+    [t('settingsDashboard.languageTitle'), ...languageButtons.map(b => b.label)]
+      .join(' ').toLocaleLowerCase('tr-TR').includes(normalizedSearchQuery);
 
   const showNotificationSection =
     !normalizedSearchQuery ||
@@ -324,10 +413,7 @@ const SettingsScreen: React.FC = () => {
       t('settingsDashboard.notifications.title'),
       t('settingsDashboard.notifications.permissionAction'),
       t('settingsDashboard.notifications.syncAction'),
-    ]
-      .join(' ')
-      .toLocaleLowerCase('tr-TR')
-      .includes(normalizedSearchQuery);
+    ].join(' ').toLocaleLowerCase('tr-TR').includes(normalizedSearchQuery);
 
   const showDataSection =
     !normalizedSearchQuery ||
@@ -335,44 +421,35 @@ const SettingsScreen: React.FC = () => {
       t('settingsDashboard.dataTitle'),
       t('settingsDashboard.shortJsonAction'),
       t('settingsDashboard.shortExcelAction'),
-    ]
-      .join(' ')
-      .toLocaleLowerCase('tr-TR')
-      .includes(normalizedSearchQuery);
+    ].join(' ').toLocaleLowerCase('tr-TR').includes(normalizedSearchQuery);
 
   const showAboutAction =
     !normalizedSearchQuery ||
-    [
-      t('settingsDashboard.versionAction'),
-      t('settingsDashboard.versionInfoTitle'),
-    ]
-      .join(' ')
-      .toLocaleLowerCase('tr-TR')
-      .includes(normalizedSearchQuery);
+    [t('settingsDashboard.versionAction'), t('settingsDashboard.versionInfoTitle')]
+      .join(' ').toLocaleLowerCase('tr-TR').includes(normalizedSearchQuery);
+
   const hasSearchResults =
-    showThemeSection ||
-    showLanguageSection ||
-    showNotificationSection ||
-    showDataSection ||
-    showAboutAction;
+    showThemeSection || showLanguageSection || showNotificationSection ||
+    showDataSection || showAboutAction;
+
+  // ─── Render ─────────────────────────────────────────────────────────────────
 
   return (
     <AppScreen>
+      {/* Export confirm sheet */}
       <BottomSheetModal
         visible={pendingExport !== null}
         onClose={() => setPendingExport(null)}
       >
-        <View className="flex-col gap-4">
+        <View style={{ gap: 20 }}>
           <Text
-            className="text-[22px] font-semibold tracking-[-0.4px]"
-            style={uiStyles.titleText}
+            style={{ fontSize: 20, fontWeight: '600', letterSpacing: -0.4, color: SMART_PDF_DARK.text }}
           >
             {pendingExport === 'json'
               ? t('settingsDashboard.confirmJsonBody')
               : t('settingsDashboard.confirmExcelBody')}
           </Text>
-
-          <View className="flex-row gap-3">
+          <View style={{ flexDirection: 'row', gap: 10 }}>
             <AppButton
               label={t('common.cancel')}
               onPress={() => setPendingExport(null)}
@@ -389,24 +466,21 @@ const SettingsScreen: React.FC = () => {
         </View>
       </BottomSheetModal>
 
+      {/* About sheet */}
       <BottomSheetModal
         visible={isAboutVisible}
         onClose={() => setIsAboutVisible(false)}
       >
-        <View className="flex-col gap-4">
-          <View className="flex-row items-center justify-between gap-3">
-            <View className="min-w-0 flex-1 gap-1">
-              <Text
-                className="text-[20px] font-semibold tracking-[-0.3px]"
-                style={uiStyles.titleText}
-              >
+        <View style={{ gap: 16 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+            <View style={{ flex: 1, gap: 2 }}>
+              <Text style={{ fontSize: 20, fontWeight: '600', letterSpacing: -0.3, color: SMART_PDF_DARK.text }}>
                 {t('settingsDashboard.versionInfoTitle')}
               </Text>
-              <Text className="text-sm" style={uiStyles.bodyText}>
+              <Text style={{ fontSize: 13, color: SMART_PDF_DARK.muted }}>
                 {t('settingsDashboard.versionLabel', { version: APP_VERSION })}
               </Text>
             </View>
-
             <AppButton
               label={t('common.cancel')}
               onPress={() => setIsAboutVisible(false)}
@@ -416,13 +490,13 @@ const SettingsScreen: React.FC = () => {
               iconName="close"
             />
           </View>
-          <Text className="text-[14px] leading-6" style={uiStyles.bodyText}>
+          <Text style={{ fontSize: 14, lineHeight: 22, color: SMART_PDF_DARK.muted }}>
             {t('settingsDashboard.aboutPrivacyLineOne')}
           </Text>
-          <Text className="text-[14px] leading-6" style={uiStyles.bodyText}>
+          <Text style={{ fontSize: 14, lineHeight: 22, color: SMART_PDF_DARK.muted }}>
             {t('settingsDashboard.aboutPrivacyLineTwo')}
           </Text>
-          <Text className="text-[14px] leading-6" style={uiStyles.bodyText}>
+          <Text style={{ fontSize: 14, lineHeight: 22, color: SMART_PDF_DARK.muted }}>
             {t('settingsDashboard.aboutPrivacyLineThree')}
           </Text>
         </View>
@@ -430,275 +504,401 @@ const SettingsScreen: React.FC = () => {
 
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{
-          paddingBottom: FLOATING_TAB_BAR.contentPaddingBottom,
-        }}
+        contentContainerStyle={{ paddingBottom: FLOATING_TAB_BAR.contentPaddingBottom }}
         showsVerticalScrollIndicator={false}
       >
-        <View className="px-5 pb-6 pt-6">
-          <View className="flex-col gap-6">
-            <View style={{ minHeight: 40, position: 'relative' }}>
-              <AppTopBar
-                left={
-                  <>
-                    <AvatarCircle image="profile" size={34} />
-                    <BrandWordmark label={t('settingsDashboard.title')} />
-                  </>
-                }
-                right={
-                  <SearchGlyph
-                    onPress={() => setIsSearchVisible(current => !current)}
-                  />
-                }
-              />
+        <View style={{ paddingHorizontal: 20, paddingTop: 24, gap: 24 }}>
 
-              <InlineGlobalSearch
-                visible={isSearchVisible}
-                query={searchQuery}
-                onChangeText={setSearchQuery}
-                onClose={() => setIsSearchVisible(false)}
-                placeholder={t('common.pageSearchPlaceholder')}
-                showNoResults={
-                  Boolean(normalizedSearchQuery) && !hasSearchResults
-                }
+          {/* Top bar */}
+          <View style={{ minHeight: 40, position: 'relative' }}>
+            <AppTopBar
+              left={
+                <>
+                  <AvatarCircle image="profile" size={34} />
+                  <BrandWordmark label={t('settingsDashboard.title')} />
+                </>
+              }
+              right={
+                <SearchGlyph onPress={() => setIsSearchVisible(c => !c)} />
+              }
+            />
+            <InlineGlobalSearch
+              visible={isSearchVisible}
+              query={searchQuery}
+              onChangeText={setSearchQuery}
+              onClose={() => setIsSearchVisible(false)}
+              placeholder={t('common.pageSearchPlaceholder')}
+              showNoResults={Boolean(normalizedSearchQuery) && !hasSearchResults}
+              style={{ position: 'absolute', left: 0, right: 0, top: 0, zIndex: 20 }}
+            />
+          </View>
+
+          {/* App profile card */}
+          {!normalizedSearchQuery && (
+            <View style={[surfaceStyles.card as object, { borderRadius: 18, padding: 16, shadowOpacity: 0, elevation: 0 }]}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+                <View
+                  style={{
+                    width: 54,
+                    height: 54,
+                    borderRadius: 16,
+                    backgroundColor: SMART_PDF_DARK.accentSurface,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Ionicons name="briefcase-outline" size={25} color={SMART_PDF_DARK.accent} />
+                </View>
+                <View style={{ flex: 1, gap: 3 }}>
+                  <Text
+                    style={{
+                      fontSize: 17,
+                      fontWeight: '700',
+                      letterSpacing: -0.4,
+                      color: SMART_PDF_DARK.text,
+                    }}
+                  >
+                    Saha CRM
+                  </Text>
+                  <Text style={{ fontSize: 13, color: SMART_PDF_DARK.muted }}>
+                    {t('settingsDashboard.versionLabel', { version: APP_VERSION })}
+                  </Text>
+                </View>
+              </View>
+
+              <View
                 style={{
-                  position: 'absolute',
-                  left: 0,
-                  right: 0,
-                  top: 0,
-                  zIndex: 20,
+                  height: 1,
+                  backgroundColor: SMART_PDF_DARK.divider,
+                  marginTop: 14,
+                  marginBottom: 12,
                 }}
               />
+
+              <View style={{ flexDirection: 'row', gap: 6 }}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 5,
+                    backgroundColor: SMART_PDF_DARK.successSurface,
+                    borderRadius: 8,
+                    paddingHorizontal: 9,
+                    paddingVertical: 5,
+                  }}
+                >
+                  <View
+                    style={{
+                      width: 5,
+                      height: 5,
+                      borderRadius: 2.5,
+                      backgroundColor: SMART_PDF_DARK.success,
+                    }}
+                  />
+                  <Text
+                    style={{ fontSize: 11, fontWeight: '600', color: SMART_PDF_DARK.success }}
+                  >
+                    Çevrimdışı
+                  </Text>
+                </View>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 4,
+                    backgroundColor: SMART_PDF_DARK.accentSurface,
+                    borderRadius: 8,
+                    paddingHorizontal: 9,
+                    paddingVertical: 5,
+                  }}
+                >
+                  <Ionicons name="lock-closed-outline" size={10} color={SMART_PDF_DARK.accent} />
+                  <Text
+                    style={{ fontSize: 11, fontWeight: '600', color: SMART_PDF_DARK.accent }}
+                  >
+                    Veriler cihazda
+                  </Text>
+                </View>
+              </View>
             </View>
+          )}
 
-            {showThemeSection ? (
-              <SurfaceCard>
-                <View className="flex-col gap-4">
-                  <View className="flex-row items-center gap-3">
-                    <Ionicons
-                      name="color-palette-outline"
-                      size={22}
-                      color={SMART_PDF_DARK.accent}
-                    />
-                    <Text
-                      className="text-[18px] font-semibold tracking-[-0.4px]"
-                      style={uiStyles.titleText}
-                    >
-                      {t('settingsDashboard.themeTitle')}
-                    </Text>
-                  </View>
-
-                  <View className="flex-row gap-2">
-                    {themeButtons.map(button => {
-                      const isActive = preference === button.code;
-
-                      return (
-                        <AppButton
-                          key={button.code}
-                          label={button.label}
-                          onPress={() =>
-                            setPreference(button.code).catch(() => undefined)
-                          }
-                          variant={isActive ? 'soft' : 'secondary'}
-                          style={{
-                            flex: 1,
-                          }}
-                          iconName={button.iconName}
-                        />
-                      );
-                    })}
-                  </View>
-                </View>
-              </SurfaceCard>
-            ) : null}
-
-            {showLanguageSection ? (
-              <SurfaceCard>
-                <View className="flex-col gap-4">
-                  <View className="flex-row items-center gap-3">
-                    <Ionicons
-                      name="language-outline"
-                      size={22}
-                      color={SMART_PDF_DARK.secondaryText}
-                    />
-                    <Text
-                      className="text-[18px] font-semibold tracking-[-0.4px]"
-                      style={uiStyles.titleText}
-                    >
-                      {t('settingsDashboard.languageTitle')}
-                    </Text>
-                  </View>
-
-                  <View className="flex-row gap-2">
-                    {languageButtons.map(button => {
-                      const isActive = currentLanguage === button.code;
-
-                      return (
-                        <AppButton
-                          key={button.code}
-                          label={button.label}
-                          onPress={() =>
-                            i18n
-                              .changeLanguage(button.code)
-                              .catch(() => undefined)
-                          }
-                          variant={isActive ? 'soft' : 'secondary'}
-                          iconName={button.icon}
-                          style={{ flex: 1 }}
-                        />
-                      );
-                    })}
-                  </View>
-                </View>
-              </SurfaceCard>
-            ) : null}
-
-            {showNotificationSection ? (
-              <SurfaceCard>
-                <View className="flex-col gap-4">
-                  <View className="flex-row items-center justify-between gap-3">
-                    <View className="flex-row items-center gap-3">
-                      <Ionicons
-                        name="notifications-outline"
-                        size={22}
+          {/* ── Kullanım (Görünüm + Dil) ────────────────── */}
+          {(showThemeSection || showLanguageSection) && (
+            <View style={{ gap: 8 }}>
+              <SectionLabel>Kullanım</SectionLabel>
+              <SettingGroup>
+                {showThemeSection && (
+                  <SettingRow
+                    iconBox={
+                      <IconBox
+                        name="color-palette-outline"
+                        bg={SMART_PDF_DARK.accentSurface}
                         color={SMART_PDF_DARK.accent}
                       />
-                      <Text
-                        className="text-[18px] font-semibold tracking-[-0.4px]"
-                        style={uiStyles.titleText}
+                    }
+                    title="Görünüm"
+                    right={
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          gap: 3,
+                          backgroundColor: SMART_PDF_DARK.surfaceMuted,
+                          padding: 3,
+                          borderRadius: 10,
+                        }}
                       >
-                        {t('settingsDashboard.notifications.title')}
-                      </Text>
-                    </View>
+                        {themeButtons.map(btn => {
+                          const isActive = preference === btn.code;
+                          return (
+                            <TouchableOpacity
+                              key={btn.code}
+                              onPress={() => setPreference(btn.code).catch(() => undefined)}
+                              activeOpacity={0.72}
+                              style={{
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                                gap: 4,
+                                paddingHorizontal: 10,
+                                paddingVertical: 6,
+                                borderRadius: 7,
+                                backgroundColor: isActive ? SMART_PDF_DARK.surface : 'transparent',
+                              }}
+                            >
+                              <Ionicons
+                                name={btn.iconName}
+                                size={13}
+                                color={isActive ? SMART_PDF_DARK.accent : SMART_PDF_DARK.muted}
+                              />
+                              <Text
+                                style={{
+                                  fontSize: 12,
+                                  fontWeight: isActive ? '600' : '400',
+                                  color: isActive ? SMART_PDF_DARK.text : SMART_PDF_DARK.muted,
+                                }}
+                              >
+                                {btn.label}
+                              </Text>
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </View>
+                    }
+                  />
+                )}
 
-                    <AppButton
-                      label={t(
-                        'settingsDashboard.notifications.testInlineAction',
-                      )}
-                      onPress={() =>
-                        handleTestNotification().catch(() => undefined)
-                      }
-                      variant="pill"
-                      compact
+                {showThemeSection && showLanguageSection && <RowDivider />}
+
+                {showLanguageSection && (
+                  <SettingRow
+                    iconBox={
+                      <IconBox
+                        name="globe-outline"
+                        bg={SMART_PDF_DARK.secondarySurface}
+                        color={SMART_PDF_DARK.secondary}
+                      />
+                    }
+                    title="Dil"
+                    right={
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          gap: 3,
+                          backgroundColor: SMART_PDF_DARK.surfaceMuted,
+                          padding: 3,
+                          borderRadius: 10,
+                        }}
+                      >
+                        {languageButtons.map(btn => {
+                          const isActive = currentLanguage === btn.code;
+                          return (
+                            <TouchableOpacity
+                              key={btn.code}
+                              onPress={() => i18n.changeLanguage(btn.code).catch(() => undefined)}
+                              activeOpacity={0.72}
+                              style={{
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                                gap: 4,
+                                paddingHorizontal: 10,
+                                paddingVertical: 6,
+                                borderRadius: 7,
+                                backgroundColor: isActive ? SMART_PDF_DARK.surface : 'transparent',
+                              }}
+                            >
+                              <Ionicons
+                                name={btn.icon}
+                                size={13}
+                                color={isActive ? SMART_PDF_DARK.accent : SMART_PDF_DARK.muted}
+                              />
+                              <Text
+                                style={{
+                                  fontSize: 12,
+                                  fontWeight: isActive ? '600' : '400',
+                                  color: isActive ? SMART_PDF_DARK.text : SMART_PDF_DARK.muted,
+                                }}
+                              >
+                                {btn.label}
+                              </Text>
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </View>
+                    }
+                  />
+                )}
+              </SettingGroup>
+            </View>
+          )}
+
+          {/* ── Notifications ───────────────────────────── */}
+          {showNotificationSection && (
+            <View style={{ gap: 8 }}>
+              <SectionLabel>{t('settingsDashboard.notifications.title')}</SectionLabel>
+              <SettingGroup>
+                <SettingRow
+                  iconBox={
+                    <IconBox
+                      name="notifications-outline"
+                      bg={SMART_PDF_DARK.successSurface}
+                      color={SMART_PDF_DARK.success}
                     />
-                  </View>
-
-                  {notificationSummary ? (
-                    <Text
-                      className="text-[13px] leading-5"
-                      style={uiStyles.bodyText}
-                    >
-                      {t('settingsDashboard.notifications.summary', {
-                        permission: t(
-                          `settingsDashboard.notifications.permissionStates.${notificationSummary.permission}`,
-                        ),
-                        count: notificationSummary.scheduledCount,
-                      })}
-                    </Text>
-                  ) : null}
-
-                  <View className="flex-row gap-2">
-                    <AppButton
-                      label={t(
-                        'settingsDashboard.notifications.permissionAction',
-                      )}
-                      onPress={() =>
-                        handleNotificationPermission().catch(() => undefined)
-                      }
-                      disabled={isNotificationBusy}
-                      variant="primary"
-                      iconName="notifications-outline"
-                      style={{ flex: 1 }}
+                  }
+                  title={t('settingsDashboard.notifications.permissionAction')}
+                  subtitle={
+                    notificationSummary
+                      ? t(`settingsDashboard.notifications.permissionStates.${notificationSummary.permission}`)
+                      : undefined
+                  }
+                  onPress={() => handleNotificationPermission().catch(() => undefined)}
+                  disabled={isNotificationBusy}
+                />
+                <RowDivider />
+                <SettingRow
+                  iconBox={
+                    <IconBox
+                      name="refresh-outline"
+                      bg={SMART_PDF_DARK.successSurface}
+                      color={SMART_PDF_DARK.success}
                     />
-
-                    <AppButton
-                      label={t('settingsDashboard.notifications.syncAction')}
-                      onPress={() =>
-                        handleReminderSync().catch(() => undefined)
-                      }
-                      disabled={isNotificationBusy}
-                      variant="secondary"
-                      iconName="refresh-outline"
-                      style={{ flex: 1 }}
+                  }
+                  title={t('settingsDashboard.notifications.syncAction')}
+                  subtitle={
+                    notificationSummary
+                      ? t('settingsDashboard.notifications.summary', {
+                          permission: t(`settingsDashboard.notifications.permissionStates.${notificationSummary.permission}`),
+                          count: notificationSummary.scheduledCount,
+                        })
+                      : undefined
+                  }
+                  onPress={() => handleReminderSync().catch(() => undefined)}
+                  disabled={isNotificationBusy}
+                />
+                <RowDivider />
+                <SettingRow
+                  iconBox={
+                    <IconBox
+                      name="paper-plane-outline"
+                      bg={SMART_PDF_DARK.accentSurface}
+                      color={SMART_PDF_DARK.accent}
                     />
-                  </View>
-                </View>
-              </SurfaceCard>
-            ) : null}
+                  }
+                  title={t('settingsDashboard.notifications.testInlineAction')}
+                  onPress={() => handleTestNotification().catch(() => undefined)}
+                  disabled={isNotificationBusy}
+                />
+              </SettingGroup>
+            </View>
+          )}
 
-            {showDataSection ? (
-              <SurfaceCard>
-                <View className="flex-col gap-6">
-                  <View className="flex-col gap-4">
-                    <Text
-                      className="text-[18px] font-semibold tracking-[-0.4px]"
-                      style={uiStyles.titleText}
-                    >
-                      {t('settingsDashboard.dataTitle')}
-                    </Text>
-
-                    <View className="flex-row gap-2">
-                      <AppButton
-                        label={t('settingsDashboard.shortJsonAction')}
-                        onPress={() => setPendingExport('json')}
-                        disabled={isJsonBusy}
-                        variant="secondary"
-                        iconName="download-outline"
-                        style={{ flex: 1 }}
+          {/* ── Data ────────────────────────────────────── */}
+          {showDataSection && (
+            <>
+              <View style={{ gap: 8 }}>
+                <SectionLabel>{t('settingsDashboard.dataTitle')}</SectionLabel>
+                <SettingGroup>
+                  <SettingRow
+                    iconBox={
+                      <IconBox
+                        name="code-slash-outline"
+                        bg={SMART_PDF_DARK.accentSurface}
+                        color={SMART_PDF_DARK.accent}
                       />
-
-                      <AppButton
-                        label={t('settingsDashboard.shortExcelAction')}
-                        onPress={() => setPendingExport('excel')}
-                        disabled={isExcelBusy}
-                        variant="soft"
-                        iconName="download-outline"
-                        style={{ flex: 1 }}
+                    }
+                    title={t('settingsDashboard.shortJsonAction')}
+                    subtitle="JSON formatında dışa aktar"
+                    onPress={() => setPendingExport('json')}
+                    disabled={isJsonBusy}
+                  />
+                  <RowDivider />
+                  <SettingRow
+                    iconBox={
+                      <IconBox
+                        name="grid-outline"
+                        bg={SMART_PDF_DARK.successSurface}
+                        color={SMART_PDF_DARK.success}
                       />
-                    </View>
-                  </View>
+                    }
+                    title={t('settingsDashboard.shortExcelAction')}
+                    subtitle="Excel formatında dışa aktar"
+                    onPress={() => setPendingExport('excel')}
+                    disabled={isExcelBusy}
+                  />
+                </SettingGroup>
+              </View>
 
-                  <View className="flex-col gap-4">
-                    <Text
-                      className="text-[18px] font-semibold tracking-[-0.4px]"
-                      style={uiStyles.titleText}
-                    >
-                      Demo verileri
-                    </Text>
-
-                    <View className="flex-row gap-2">
-                      <AppButton
-                        label="Demo verileri ekle"
-                        onPress={() => handleSeedDemo()}
-                        disabled={isDemoBusy}
-                        variant="primary"
-                        iconName="add-circle-outline"
-                        style={{ flex: 1 }}
+              <View style={{ gap: 8 }}>
+                <SectionLabel>Demo</SectionLabel>
+                <SettingGroup>
+                  <SettingRow
+                    iconBox={
+                      <IconBox
+                        name="flask-outline"
+                        bg={SMART_PDF_DARK.accentSurface}
+                        color={SMART_PDF_DARK.accent}
                       />
-
-                      <AppButton
-                        label="Demo verileri kaldır"
-                        onPress={() => handleClearDemo()}
-                        disabled={isDemoBusy}
-                        variant="secondary"
-                        iconName="trash-outline"
-                        style={{ flex: 1 }}
+                    }
+                    title="Demo verileri ekle"
+                    subtitle="Müşteri ve vade örnekleri yükle"
+                    onPress={handleSeedDemo}
+                    disabled={isDemoBusy}
+                  />
+                  <RowDivider />
+                  <SettingRow
+                    iconBox={
+                      <IconBox
+                        name="trash-outline"
+                        bg={SMART_PDF_DARK.dangerSurface}
+                        color={SMART_PDF_DARK.danger}
                       />
-                    </View>
-                  </View>
-                </View>
-              </SurfaceCard>
-            ) : null}
+                    }
+                    title="Demo verileri kaldır"
+                    onPress={handleClearDemo}
+                    disabled={isDemoBusy}
+                    dangerous
+                  />
+                </SettingGroup>
+              </View>
+            </>
+          )}
 
-            {showAboutAction ? (
-              <AppButton
-                label={t('settingsDashboard.versionAction')}
+          {/* ── About ───────────────────────────────────── */}
+          {showAboutAction && (
+            <SettingGroup>
+              <SettingRow
+                iconBox={
+                  <IconBox
+                    name="information-circle-outline"
+                    bg={SMART_PDF_DARK.surfaceAlt}
+                    color={SMART_PDF_DARK.muted}
+                  />
+                }
+                title={t('settingsDashboard.versionAction')}
                 onPress={() => setIsAboutVisible(true)}
-                variant="pill"
-                iconName="information-circle-outline"
               />
-            ) : null}
-          </View>
+            </SettingGroup>
+          )}
+
         </View>
       </ScrollView>
     </AppScreen>

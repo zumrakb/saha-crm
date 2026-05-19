@@ -25,6 +25,7 @@ import NewTermModal from '../modals/NewTermModal';
 import {
   FLOATING_TAB_BAR,
   SMART_PDF_DARK,
+  surfaceStyles,
   uiStyles,
   useAppTheme,
 } from '../components/ui/theme';
@@ -337,10 +338,7 @@ const HomeScreen: React.FC = () => {
               />
             </View>
 
-            <View
-              className="rounded-[26px] px-4 py-4"
-              style={{ backgroundColor: SMART_PDF_DARK.surfaceAlt }}
-            >
+            <View style={[surfaceStyles.card, { borderRadius: 20, overflow: 'hidden', padding: 0 }]}>
               <Calendar
                 key={`${calendarLocale}-${colors.statusBar}`}
                 current={`${visibleMonth}-01`}
@@ -355,15 +353,15 @@ const HomeScreen: React.FC = () => {
                 onDayPress={day => openAgenda(day.dateString)}
                 onMonthChange={handleVisibleMonthChange}
                 theme={{
-                  calendarBackground: SMART_PDF_DARK.surfaceAlt,
-                  textSectionTitleColor: colors.text,
+                  calendarBackground: SMART_PDF_DARK.surface,
+                  textSectionTitleColor: colors.muted,
                   monthTextColor: colors.text,
                   dayTextColor: colors.text,
                   todayTextColor: colors.accent,
                   selectedDayBackgroundColor: colors.accent,
                   selectedDayTextColor: '#FFFFFF',
-                  textDisabledColor: '#9EA7A1',
-                  arrowColor: colors.text,
+                  textDisabledColor: SMART_PDF_DARK.muted,
+                  arrowColor: colors.muted,
                   indicatorColor: colors.accent,
                   dotColor: colors.accent,
                   selectedDotColor: '#FFFFFF',
@@ -373,22 +371,41 @@ const HomeScreen: React.FC = () => {
                   textDayHeaderFontSize: 13,
                   textDayHeaderFontWeight: '500',
                 }}
-                style={{ borderWidth: 0 }}
+                style={{ borderWidth: 0, paddingLeft: 4, paddingRight: 4 }}
               />
             </View>
 
             <View className="flex-col gap-4">
-              <View className="flex-row items-end justify-between">
-                <Text className="text-[20px] font-semibold tracking-[-0.6px]" style={uiStyles.titleText}>
-                  {t('homeDashboard.upcomingTermsTitle')}
-                </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                  <View
+                    style={{
+                      width: 3,
+                      height: 18,
+                      borderRadius: 2,
+                      backgroundColor: SMART_PDF_DARK.accent,
+                    }}
+                  />
+                  <Text
+                    className="text-[18px] font-semibold tracking-[-0.5px]"
+                    style={uiStyles.titleText}
+                  >
+                    {t('homeDashboard.upcomingTermsTitle')}
+                  </Text>
+                </View>
                 <TouchableOpacity
                   onPress={() => setIsTermModalVisible(true)}
-                  activeOpacity={0.85}
-                  className="h-10 w-10 items-center justify-center rounded-full"
-                  style={{ backgroundColor: SMART_PDF_DARK.surfaceAlt }}
+                  activeOpacity={0.75}
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: 10,
+                    backgroundColor: SMART_PDF_DARK.accentSurface,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
                 >
-                  <Ionicons name="add" size={24} color={SMART_PDF_DARK.text} />
+                  <Ionicons name="add" size={18} color={SMART_PDF_DARK.accent} />
                 </TouchableOpacity>
               </View>
 
@@ -487,34 +504,67 @@ const HomeScreen: React.FC = () => {
                           params: { customerId: activity.customerId },
                         } as never);
                       }}
-                      activeOpacity={0.88}
-                      className="rounded-[22px] px-4 py-4"
-                      style={{ backgroundColor: SMART_PDF_DARK.surfaceAlt }}
+                      activeOpacity={0.82}
+                      style={{
+                        borderRadius: 14,
+                        backgroundColor: SMART_PDF_DARK.surfaceAlt,
+                        overflow: 'hidden',
+                      }}
                     >
-                      <View className="flex-col gap-2">
-                        <View className="flex-row items-start justify-between gap-3">
-                          <View className="min-w-0 flex-1 gap-1">
-                            <Text className="text-sm font-semibold" style={uiStyles.titleText}>
-                              {customer?.customerName ?? t('homeDashboard.unknownCustomer')}
-                            </Text>
-                            <Text className="text-xs" style={uiStyles.bodyText}>
-                              {customer?.companyName ?? t('homeDashboard.missingCompany')}
-                            </Text>
+                      <View style={{ flexDirection: 'row' }}>
+                        <View
+                          style={{
+                            width: 3,
+                            backgroundColor: SMART_PDF_DARK.accent,
+                          }}
+                        />
+                        <View style={{ flex: 1, padding: 13, gap: 6 }}>
+                          <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
+                            <View style={{ flex: 1, minWidth: 0, gap: 1 }}>
+                              <Text
+                                style={{ fontSize: 14, fontWeight: '600', color: SMART_PDF_DARK.text }}
+                                numberOfLines={1}
+                              >
+                                {customer?.customerName ?? t('homeDashboard.unknownCustomer')}
+                              </Text>
+                              {customer?.companyName ? (
+                                <Text
+                                  style={{ fontSize: 12, color: SMART_PDF_DARK.muted }}
+                                  numberOfLines={1}
+                                >
+                                  {customer.companyName}
+                                </Text>
+                              ) : null}
+                            </View>
+                            <View
+                              style={{
+                                backgroundColor: SMART_PDF_DARK.accentSurface,
+                                borderRadius: 8,
+                                paddingHorizontal: 8,
+                                paddingVertical: 3,
+                                flexShrink: 0,
+                              }}
+                            >
+                              <Text
+                                style={{
+                                  fontSize: 11,
+                                  fontWeight: '600',
+                                  color: SMART_PDF_DARK.accent,
+                                }}
+                              >
+                                {activity.type}
+                              </Text>
+                            </View>
                           </View>
-
-                          <View
-                            className="rounded-full px-3 py-1.5"
-                            style={{ backgroundColor: SMART_PDF_DARK.accentSurface }}
-                          >
-                            <Text className="text-xs font-semibold" style={{ color: SMART_PDF_DARK.accent }}>
-                              {activity.type}
+                          {activity.note?.trim() ? (
+                            <Text
+                              style={{ fontSize: 13, color: SMART_PDF_DARK.muted, lineHeight: 18 }}
+                              numberOfLines={2}
+                            >
+                              {activity.note.trim()}
                             </Text>
-                          </View>
+                          ) : null}
                         </View>
-
-                        <Text className="text-sm leading-6" style={uiStyles.titleText}>
-                          {activity.note?.trim() || t('activityItem.emptyNote')}
-                        </Text>
                       </View>
                     </TouchableOpacity>
                   );
